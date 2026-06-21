@@ -1,0 +1,95 @@
+{
+  "common": {
+    "appName": "Next Flow",
+    "orContinueWith": "or continue with",
+    "loading": "Loading..."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "Sign in to your account to continue",
+    "signUpTitle": "Create an account",
+    "signUpSubtitle": "Get started with Next Flow in seconds",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "confirmPassword": "Confirm password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google",
+    "createAccount": "Create account"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "dashboard": "Dashboard",
+    "title": "Operational Snapshot",
+    "totalActiveOrders": "Total Active Orders",
+    "occupiedTables": "Occupied Tables",
+    "totalRevenue": "Total Revenue",
+    "salesAnalytics": "Sales Analytics",
+    "timeStatus": "Time status",
+    "avgWaitTime": "Avg Wait Time",
+    "liveActivityFeed": "Live Activity Feed",
+    "today": "Today",
+    "live": "Live",
+    "handle": "Handle",
+    "waiterRequested": "Waiter requested",
+    "orderReady": "Order #{0} ready",
+    "kitchen": "Kitchen",
+    "vipRoom": "VIP Room {0}",
+    "minAgo": "{0} min ago",
+    "menu": "Menu",
+    "order": "Order",
+    "tables": "Tables",
+    "vipRooms": "VIP Rooms",
+    "sales": "Sales",
+    "admin": "Admin"
+  },
+  "buttons": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "forms": {
+    "required": "This field is required"
+  },
+  "validation": {
+    "email": {
+      "required": "Email is required",
+      "invalid": "Email must be valid"
+    },
+    "password": {
+      "required": "Password is required",
+      "minLength": "Password must be at least 8 characters"
+    },
+    "name": {
+      "required": "Name is required",
+      "minLength": "Name must be at least 2 characters"
+    },
+    "confirmPassword": {
+      "required": "Please confirm your password",
+      "mismatch": "Passwords do not match"
+    }
+  },
+  "locale": {
+    "switch": "Switch language",
+    "en": "English",
+    "ar": "Arabic"
+  },
+  "theme": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode",
+    "light": "Light",
+    "dark": "Dark"
+  }
+}

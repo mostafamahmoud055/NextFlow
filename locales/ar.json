@@ -1,0 +1,95 @@
+{
+  "common": {
+    "appName": "نكست فلو",
+    "orContinueWith": "أو المتابعة باستخدام",
+    "loading": "جاري التحميل..."
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "signInTitle": "مرحباً بعودتك",
+    "signInSubtitle": "سجّل الدخول إلى حسابك للمتابعة",
+    "signUpTitle": "إنشاء حساب",
+    "signUpSubtitle": "ابدأ مع نكست فلو في ثوانٍ",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "fullName": "الاسم الكامل",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "signInWithGoogle": "تسجيل الدخول عبر Google",
+    "signUpWithGoogle": "إنشاء حساب عبر Google",
+    "createAccount": "إنشاء حساب"
+  },
+  "navigation": {
+    "home": "الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "users": "المستخدمون",
+    "settings": "الإعدادات"
+  },
+  "dashboard": {
+    "dashboard": "لوحة التحكم",
+    "title": "لمحة تشغيلية",
+    "totalActiveOrders": "إجمالي الطلبات النشطة",
+    "occupiedTables": "الطاولات المشغولة",
+    "totalRevenue": "إجمالي الإيرادات",
+    "salesAnalytics": "تحليلات المبيعات",
+    "timeStatus": "حالة الوقت",
+    "avgWaitTime": "متوسط وقت الانتظار",
+    "liveActivityFeed": "موجز النشاط المباشر",
+    "today": "اليوم",
+    "live": "مباشر",
+    "handle": "معالجة",
+    "waiterRequested": "طلب نادل",
+    "orderReady": "الطلب #{0} جاهز",
+    "kitchen": "المطبخ",
+    "vipRoom": "غرفة كبار الشخصيات {0}",
+    "minAgo": "منذ {0} دقيقة",
+    "menu": "القائمة",
+    "order": "الطلب",
+    "tables": "الطاولات",
+    "vipRooms": "غرف كبار الشخصيات",
+    "sales": "المبيعات",
+    "admin": "المدير"
+  },
+  "buttons": {
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل"
+  },
+  "forms": {
+    "required": "هذا الحقل مطلوب"
+  },
+  "validation": {
+    "email": {
+      "required": "البريد الإلكتروني مطلوب",
+      "invalid": "يجب إدخال بريد إلكتروني صالح"
+    },
+    "password": {
+      "required": "كلمة المرور مطلوبة",
+      "minLength": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل"
+    },
+    "name": {
+      "required": "الاسم مطلوب",
+      "minLength": "يجب أن يتكون الاسم من حرفين على الأقل"
+    },
+    "confirmPassword": {
+      "required": "يرجى تأكيد كلمة المرور",
+      "mismatch": "كلمتا المرور غير متطابقتين"
+    }
+  },
+  "locale": {
+    "switch": "تغيير اللغة",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "theme": {
+    "switchToLight": "التبديل إلى الوضع الفاتح",
+    "switchToDark": "التبديل إلى الوضع الداكن",
+    "light": "فاتح",
+    "dark": "داكن"
+  }
+}
