@@ -1,6 +1,6 @@
 <template>
   <v-card class="dashboard-card mb-6" elevation="0">
-    <h2 class="text-h6 font-weight-bold mb-6">{{ t('dashboard.timeStatus') }}</h2>
+    <h2 class="text-h6 font-weight-bold mb-6 dashboard-section-title">{{ t('dashboard.timeStatus') }}</h2>
     
     <div class="gauge-container d-flex flex-column align-center justify-center pt-4 pb-2">
       <!-- Mock Gauge Chart -->
@@ -46,5 +46,26 @@ const { t } = useAppLocale()
   bottom: 0;
   left: 0;
   right: 0;
+}
+
+@media (min-width: 769px) and (max-width: 1023px) {
+  .gauge-arc {
+    width: 220px;
+    height: 110px;
+    min-height: 110px;
+  }
+}
+
+@media (max-width: 768px) {
+  .gauge-arc {
+    width: 200px;
+    height: 100px;
+    min-height: 100px;
+  }
+
+  .gauge-content .text-h4 {
+    font-size: 1.5rem !important;
+    line-height: 1.2 !important;
+  }
 }
 </style>

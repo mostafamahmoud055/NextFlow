@@ -159,7 +159,7 @@
     </v-navigation-drawer>
 
     <v-main class="bg-background">
-      <v-container fluid class="app-page px-4 px-md-8 pb-8">
+      <v-container fluid class="app-page px-4 px-sm-6 px-md-8 pb-8">
         <slot />
       </v-container>
     </v-main>

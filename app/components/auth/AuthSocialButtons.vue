@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="d-flex align-center my-6">
+    <div class="d-flex align-center my-6 auth-social-divider">
       <v-divider />
       <span class="text-caption text-medium-emphasis mx-4 text-no-wrap">{{ t('common.orContinueWith') }}</span>
       <v-divider />

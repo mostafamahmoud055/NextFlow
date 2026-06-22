@@ -1,7 +1,7 @@
 <template>
-  <HomeStats class="animate mt-8" style="--delay: 0" />
+  <HomeStats class="animate mt-4 mt-sm-6 mt-md-8" style="--delay: 0" />
 
-  <v-row class="animate mt-0" style="--delay: 1">
+  <v-row class="animate mt-0 dashboard-content-row" style="--delay: 1">
     <v-col cols="12" lg="8">
       <HomeAnalytics />
     </v-col>

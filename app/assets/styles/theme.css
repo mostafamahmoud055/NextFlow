@@ -62,6 +62,128 @@ body {
   }
 }
 
+@media (max-width: 768px) {
+  .app-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    padding-inline: 12px !important;
+    padding-bottom: 24px !important;
+  }
+
+  .app-layout .v-main {
+    overflow-x: clip;
+  }
+
+  .dashboard-page-title {
+    font-size: 1.5rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .dashboard-stat-value {
+    font-size: 1.5rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .dashboard-section-title {
+    font-size: 1rem !important;
+  }
+
+  .home-stats-row,
+  .dashboard-content-row {
+    margin-inline: 0;
+  }
+
+  .home-stats-row > .v-col,
+  .dashboard-content-row > .v-col {
+    padding-inline: 0;
+  }
+
+  .home-stats-row > .v-col:not(:last-child) {
+    padding-bottom: 16px;
+  }
+
+  .dashboard-content-row > .v-col:not(:last-child) {
+    padding-bottom: 16px;
+  }
+
+  .app-layout .v-app-bar {
+    height: 64px !important;
+  }
+
+  .app-layout .v-navigation-drawer {
+    top: 64px !important;
+    height: calc(100dvh - 64px) !important;
+    max-height: calc(100dvh - 64px) !important;
+  }
+
+  .app-layout .v-main {
+    padding-top: 64px !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1023px) {
+  .app-page {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    padding-inline: 20px !important;
+    padding-bottom: 32px !important;
+  }
+
+  .app-layout .v-main {
+    overflow-x: clip;
+  }
+
+  .dashboard-page-title {
+    font-size: 1.75rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .dashboard-stat-value {
+    font-size: 1.75rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .dashboard-section-title {
+    font-size: 1.0625rem !important;
+  }
+
+  .dashboard-card {
+    border-radius: 28px !important;
+    padding: 22px;
+  }
+
+  .home-stats-row,
+  .dashboard-content-row {
+    margin-inline: 0;
+  }
+
+  .home-stats-row > .v-col,
+  .dashboard-content-row > .v-col {
+    padding-inline: 8px;
+  }
+
+  .dashboard-content-row > .v-col:not(:last-child) {
+    padding-bottom: 20px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 959px) {
+  .home-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .home-stats-row > .v-col {
+    padding: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    flex: none;
+  }
+}
+
 .app-controls-fab > * {
   flex: none;
 }

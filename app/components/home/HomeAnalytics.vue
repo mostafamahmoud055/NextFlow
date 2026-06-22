@@ -1,7 +1,7 @@
 <template>
   <v-card class="dashboard-card h-100" elevation="0">
-    <div class="d-flex align-center justify-space-between mb-8">
-      <h2 class="text-h6 font-weight-bold">{{ t('dashboard.salesAnalytics') }}</h2>
+    <div class="d-flex align-center justify-space-between mb-6 mb-md-8">
+      <h2 class="text-h6 font-weight-bold dashboard-section-title">{{ t('dashboard.salesAnalytics') }}</h2>
       <v-btn variant="text" color="medium-emphasis" size="small" class="text-none font-weight-medium" append-icon="mdi-chevron-down">
         {{ t('dashboard.today') }}
       </v-btn>
@@ -160,5 +160,54 @@ const { t } = useAppLocale()
   top: 4px;
   left: 50%;
   transform: translateX(-50%);
+}
+
+@media (min-width: 769px) and (max-width: 1023px) {
+  .chart-container {
+    height: 260px;
+  }
+
+  .bar-group {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    max-width: 44px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 240px;
+    padding-top: 12px;
+  }
+
+  .chart-grid {
+    left: 24px;
+  }
+
+  [dir="rtl"] .chart-grid {
+    right: 24px;
+  }
+
+  .chart-bars {
+    margin-left: 24px;
+    padding-inline: 4px !important;
+  }
+
+  [dir="rtl"] .chart-bars {
+    margin-right: 24px;
+  }
+
+  .bar-group {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+    max-width: 36px;
+  }
+
+  .chart-x-axis {
+    padding-inline: 4px !important;
+    margin-top: 12px !important;
+  }
 }
 </style>

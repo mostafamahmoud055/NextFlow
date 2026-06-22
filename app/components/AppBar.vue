@@ -85,6 +85,12 @@ const searchQuery = ref('')
   min-height: 80px;
 }
 
+@media (max-width: 768px) {
+  .dashboard-navbar {
+    min-height: 64px;
+  }
+}
+
 .dashboard-navbar :deep(.v-toolbar__content) {
   display: block;
   width: 100%;
@@ -157,5 +163,68 @@ const searchQuery = ref('')
   flex: none;
   width: 16px;
   height: 16px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-navbar :deep(.v-toolbar__content) {
+    height: 64px;
+  }
+
+  .navbar-inner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    height: 64px;
+    column-gap: 8px;
+  }
+
+  .navbar-brand span {
+    display: none;
+  }
+
+  .navbar-brand .v-icon {
+    font-size: 28px !important;
+  }
+
+  .navbar-actions .v-btn:not(.profile-toggle):first-child {
+    display: none;
+  }
+
+  .profile-toggle {
+    min-width: 40px !important;
+    width: 40px !important;
+  }
+
+  .profile-toggle :deep(.v-btn__content) {
+    width: 40px;
+  }
+
+  .profile-toggle__label,
+  .profile-toggle__icon {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1023px) {
+  .navbar-inner {
+    column-gap: 12px;
+  }
+
+  .navbar-actions .v-btn:not(.profile-toggle):first-child {
+    display: none;
+  }
+
+  .profile-toggle {
+    min-width: 40px !important;
+    width: 40px !important;
+  }
+
+  .profile-toggle :deep(.v-btn__content) {
+    width: 40px;
+    gap: 0;
+  }
+
+  .profile-toggle__label,
+  .profile-toggle__icon {
+    display: none;
+  }
 }
 </style>

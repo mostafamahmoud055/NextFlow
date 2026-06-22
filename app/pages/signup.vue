@@ -72,7 +72,7 @@
     />
 
     <p
-      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 animate"
+      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 animate auth-footer-text"
       style="--delay: 6"
     >
       {{ t('auth.hasAccount') }}

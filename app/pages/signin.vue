@@ -31,7 +31,7 @@
       />
 
       <div
-        class="d-flex justify-end mb-6 mt-2 animate"
+        class="d-flex justify-end mb-4 mb-md-6 mt-2 animate auth-forgot-link"
         style="--delay: 2"
       >
         <a href="#" class="text-caption text-medium-emphasis text-decoration-none">
@@ -62,7 +62,7 @@
     />
 
     <p
-      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 animate"
+      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 animate auth-footer-text"
       style="--delay: 5"
     >
       {{ t('auth.noAccount') }}
