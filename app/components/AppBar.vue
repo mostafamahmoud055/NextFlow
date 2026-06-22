@@ -1,34 +1,12 @@
 <template>
-  <v-toolbar flat color="transparent" height="80" class="dashboard-navbar px-0">
-    <div class="navbar-inner">
+  <v-app-bar flat color="background" height="80" class="dashboard-navbar px-0" :order="0">
+    <div class="navbar-inner px-4 px-md-8">
       <div class="d-flex align-center ga-2 navbar-brand">
         <v-icon color="#f97316" size="32">mdi-fire</v-icon>
         <span class="text-h6 font-weight-bold text-high-emphasis">{{ t('common.appName') }}</span>
       </div>
 
-      <div class="navbar-nav-slot">
-        <v-sheet
-          color="surface"
-          rounded="pill"
-          class="navbar-nav-group align-center px-4 py-2"
-          elevation="0"
-          border
-        >
-          <v-btn
-            v-for="item in navItems"
-            :key="item.key"
-            :variant="item.active ? 'flat' : 'text'"
-            :color="item.active ? 'primary' : 'medium-emphasis'"
-            rounded="pill"
-            size="small"
-            height="40"
-            class="navbar-nav-btn text-none font-weight-medium px-4"
-            :ripple="false"
-          >
-            {{ t(`dashboard.${item.key}`) }}
-          </v-btn>
-        </v-sheet>
-      </div>
+      <AppBarSearch v-model="searchQuery" />
 
       <div class="d-flex align-center ga-2 navbar-actions">
         <v-btn
@@ -40,7 +18,6 @@
           height="40"
           :ripple="false"
         >
-          <v-icon size="20">mdi-headset</v-icon>
         </v-btn>
         <v-btn
           icon
@@ -68,7 +45,6 @@
         </v-btn>
 
         <LanguageToggle />
-        <ThemeToggle />
 
         <v-btn
           variant="flat"
@@ -94,20 +70,13 @@
         </v-btn>
       </div>
     </div>
-  </v-toolbar>
+  </v-app-bar>
 </template>
 
 <script setup>
 const { t } = useAppLocale()
 
-const navItems = [
-  { key: 'dashboard', active: true },
-  { key: 'menu', active: false },
-  { key: 'order', active: false },
-  { key: 'tables', active: false },
-  { key: 'vipRooms', active: false },
-  { key: 'sales', active: false },
-]
+const searchQuery = ref('')
 </script>
 
 <style scoped>
@@ -135,52 +104,6 @@ const navItems = [
 .navbar-brand,
 .navbar-actions {
   flex: none;
-}
-
-.navbar-nav-slot {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-width: 0;
-  height: 44px;
-}
-
-.navbar-nav-group {
-  display: flex;
-  flex: none;
-  flex-shrink: 0;
-  align-items: center;
-  min-width: 36rem;
-  width: max-content;
-
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-@media (max-width: 959px) {
-  .navbar-nav-slot {
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .navbar-nav-group {
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-  }
-}
-
-.navbar-nav-btn {
-  flex: none;
-  letter-spacing: 0;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-}
-
-.navbar-nav-group :deep(.v-btn__content) {
-  height: 36px;
 }
 
 .profile-toggle {

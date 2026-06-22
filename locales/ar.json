@@ -2,7 +2,8 @@
   "common": {
     "appName": "نكست فلو",
     "orContinueWith": "أو المتابعة باستخدام",
-    "loading": "جاري التحميل..."
+    "loading": "جاري التحميل...",
+    "search": "بحث..."
   },
   "auth": {
     "signIn": "تسجيل الدخول",
@@ -25,7 +26,33 @@
   "navigation": {
     "home": "الرئيسية",
     "dashboard": "لوحة التحكم",
+    "sales": "المبيعات",
+    "manageInvoices": "إدارة الفواتير",
+    "createInvoice": "إنشاء فاتورة",
+    "manageEstimates": "إدارة التقديرات",
+    "createEstimate": "إنشاء تقدير",
+    "creditNotes": "إشعارات دائنة",
+    "refundReceipts": "إيصالات استرداد",
+    "recurringInvoices": "فواتير متكررة",
+    "clientPayments": "مدفوعات العملاء",
+    "salesSettings": "إعدادات المبيعات",
+    "clients": "العملاء",
+    "inventory": "المخزون",
+    "purchases": "المشتريات",
+    "purchaseInvoices": "فواتير المشتريات",
+    "purchaseRefunds": "مستردات المشتريات",
+    "debitNotes": "إشعارات مدينة",
+    "manageSuppliers": "إدارة الموردين",
+    "suppliersPayments": "مدفوعات الموردين",
+    "purchaseSettings": "إعدادات المشتريات",
+    "finance": "المالية",
+    "accounting": "المحاسبة",
+    "employees": "الموظفون",
+    "analytics": "التحليلات",
     "users": "المستخدمون",
+    "goals": "الأهداف",
+    "messages": "الرسائل",
+    "tasks": "المهام",
     "settings": "الإعدادات"
   },
   "dashboard": {

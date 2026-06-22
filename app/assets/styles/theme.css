@@ -1,3 +1,29 @@
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
+html,
+body,
+#__nuxt {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.v-application {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.v-application__wrap {
+  min-height: inherit;
+}
+
 .v-application,
 .v-card,
 .v-sheet,
@@ -42,6 +68,60 @@
 
 [dir="rtl"] .v-application {
   font-family: 'Cairo', 'Inter', sans-serif;
+}
+
+.app-layout .v-app-bar {
+  height: 80px !important;
+}
+
+.app-layout .v-navigation-drawer {
+  top: 80px !important;
+  height: calc(100vh - 80px) !important;
+  max-height: calc(100vh - 80px) !important;
+  transition: none !important;
+}
+
+.app-layout .v-navigation-drawer__content {
+  height: 100%;
+  overflow: hidden;
+  transition: none !important;
+}
+
+.app-layout .v-main {
+  padding-top: 80px !important;
+  transition: none !important;
+}
+
+.app-layout.is-rail .v-navigation-drawer {
+  width: 88px !important;
+  max-width: 88px !important;
+}
+
+.app-layout.is-expanded .v-navigation-drawer {
+  width: 280px !important;
+  max-width: 280px !important;
+}
+
+.app-layout.is-rail .v-main {
+  padding-inline-start: 88px !important;
+  padding-inline-end: 0 !important;
+}
+
+.app-layout.is-expanded .v-main {
+  padding-inline-start: 280px !important;
+  padding-inline-end: 0 !important;
+}
+
+.app-layout.is-rail .brand-item .v-list-item-title,
+.app-layout.is-rail .brand-item .v-list-item__append {
+  opacity: 0;
+  width: 0;
+  min-width: 0;
+  max-width: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  pointer-events: none;
 }
 
 @media (max-width: 600px) {

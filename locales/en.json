@@ -2,7 +2,8 @@
   "common": {
     "appName": "Next Flow",
     "orContinueWith": "or continue with",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "search": "Search..."
   },
   "auth": {
     "signIn": "Sign in",
@@ -25,7 +26,33 @@
   "navigation": {
     "home": "Home",
     "dashboard": "Dashboard",
+    "sales": "Sales",
+    "manageInvoices": "Manage Invoices",
+    "createInvoice": "Create Invoice",
+    "manageEstimates": "Manage Estimates",
+    "createEstimate": "Create Estimate",
+    "creditNotes": "Credit Notes",
+    "refundReceipts": "Refund Receipts",
+    "recurringInvoices": "Recurring Invoices",
+    "clientPayments": "Client Payments",
+    "salesSettings": "Sales Settings",
+    "clients": "Clients",
+    "inventory": "Inventory",
+    "purchases": "Purchases",
+    "purchaseInvoices": "Purchase Invoices",
+    "purchaseRefunds": "Purchase Refunds",
+    "debitNotes": "Debit Notes",
+    "manageSuppliers": "Manage Suppliers",
+    "suppliersPayments": "Suppliers Payments",
+    "purchaseSettings": "Purchase Settings",
+    "finance": "Finance",
+    "accounting": "Accounting",
+    "employees": "Employees",
+    "analytics": "Analytics",
     "users": "Users",
+    "goals": "Goals",
+    "messages": "Messages",
+    "tasks": "Tasks",
     "settings": "Settings"
   },
   "dashboard": {

@@ -16,7 +16,7 @@
         type="email"
         prepend-icon="mdi-email-outline"
         :rules="emailRules"
-        class="auth-animate"
+        class="animate"
         style="--delay: 0"
       />
 
@@ -26,12 +26,12 @@
         prepend-icon="mdi-lock-outline"
         :rules="passwordRules"
         show-password-toggle
-        class="auth-animate"
+        class="animate"
         style="--delay: 1"
       />
 
       <div
-        class="d-flex justify-end mb-6 mt-2 auth-animate"
+        class="d-flex justify-end mb-6 mt-2 animate"
         style="--delay: 2"
       >
         <a href="#" class="text-caption text-medium-emphasis text-decoration-none">
@@ -47,7 +47,7 @@
         rounded="pill"
         :loading="loading"
         :disabled="!isValid"
-        class="auth-animate text-none"
+        class="animate text-none"
         style="--delay: 3"
       >
         {{ t('auth.signIn') }}
@@ -56,13 +56,13 @@
 
     <AuthSocialButtons
       mode="signin"
-      class="auth-animate"
+      class="animate"
       style="--delay: 4"
       @google="handleSocial"
     />
 
     <p
-      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 auth-animate"
+      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 animate"
       style="--delay: 5"
     >
       {{ t('auth.noAccount') }}

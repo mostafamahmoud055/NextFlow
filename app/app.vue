@@ -8,14 +8,12 @@
 
 <script setup>
 import {
-  LOCALE_COOKIE_KEY,
-  LOCALE_COOKIE_OPTIONS,
   getLocaleDirection,
   resolveLocale,
 } from '~/utils/localeHelpers'
 
-const localeCookie = useCookie(LOCALE_COOKIE_KEY, LOCALE_COOKIE_OPTIONS)
-const dir = computed(() => getLocaleDirection(resolveLocale(localeCookie.value)))
+const { locale } = useI18n()
+const dir = computed(() => getLocaleDirection(resolveLocale(locale.value)))
 
 const i18nHead = useLocaleHead({
   dir: true,

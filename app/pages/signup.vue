@@ -15,7 +15,7 @@
         :label="t('auth.fullName')"
         prepend-icon="mdi-account-outline"
         :rules="nameRules"
-        class="auth-animate"
+        class="animate"
         style="--delay: 0"
       />
 
@@ -25,7 +25,7 @@
         type="email"
         prepend-icon="mdi-email-outline"
         :rules="emailRules"
-        class="auth-animate"
+        class="animate"
         style="--delay: 1"
       />
 
@@ -35,7 +35,7 @@
         prepend-icon="mdi-lock-outline"
         :rules="passwordRules"
         show-password-toggle
-        class="auth-animate"
+        class="animate"
         style="--delay: 2"
       />
 
@@ -45,7 +45,7 @@
         prepend-icon="mdi-lock-check-outline"
         :rules="confirmPasswordRules"
         show-password-toggle
-        class="auth-animate"
+        class="animate"
         style="--delay: 3"
       />
 
@@ -57,7 +57,7 @@
         rounded="pill"
         :loading="loading"
         :disabled="!isValid"
-        class="auth-animate text-none mt-4"
+        class="animate text-none mt-4"
         style="--delay: 4"
       >
         {{ t('auth.createAccount') }}
@@ -66,13 +66,13 @@
 
     <AuthSocialButtons
       mode="signup"
-      class="auth-animate"
+      class="animate"
       style="--delay: 5"
       @google="handleSocial"
     />
 
     <p
-      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 auth-animate"
+      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 animate"
       style="--delay: 6"
     >
       {{ t('auth.hasAccount') }}

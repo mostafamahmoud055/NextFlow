@@ -11,7 +11,7 @@
         <v-card class="dashboard-card" elevation="0">
           <div class="d-flex align-center mb-4">
             <v-sheet color="background" rounded="lg" class="pa-2 me-4">
-              <v-icon size="24" color="medium-emphasis">mdi-receipt-text-outline</v-icon>
+              <v-icon size="24" color="medium-emphasis">mdi-receipt-outline</v-icon>
             </v-sheet>
             <span class="text-h4 font-weight-bold">134</span>
           </div>
