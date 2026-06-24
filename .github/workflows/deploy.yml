@@ -16,11 +16,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --omit=optional
 
       - name: Build
         run: npm run build
@@ -35,12 +35,17 @@ jobs:
           script_stop: true
           script: |
             cd /var/www/NextFlow
+
             git pull origin main
-            npm install
+
+            npm ci --omit=optional
+
             npm run build
-            if command -v pm2 >/dev/null 2>&1; then
-              pm2 restart nextflow || pm2 start .output/server/index.mjs --name nextflow
+
+            if pm2 describe nextflow > /dev/null; then
+              pm2 restart nextflow
             else
-              pkill node || true
-              node .output/server/index.mjs &
+              pm2 start .output/server/index.mjs --name nextflow
             fi
+
+            pm2 save
