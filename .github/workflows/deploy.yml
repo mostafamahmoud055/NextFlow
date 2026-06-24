@@ -39,7 +39,8 @@ jobs:
           script: |
             cd /var/www/NextFlow
 
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
 
             npm install -g npm@11.6.0
 
