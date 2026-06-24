@@ -1,6 +1,7 @@
 {
   "common": {
     "appName": "نكست فلو",
+    "metaDescription": "لوحة تشغيل نكست فلو للمبيعات والمخزون وإدارة الفريق.",
     "orContinueWith": "أو المتابعة باستخدام",
     "loading": "جاري التحميل...",
     "search": "بحث..."
@@ -21,7 +22,23 @@
     "hasAccount": "لديك حساب بالفعل؟",
     "signInWithGoogle": "تسجيل الدخول عبر Google",
     "signUpWithGoogle": "إنشاء حساب عبر Google",
-    "createAccount": "إنشاء حساب"
+    "createAccount": "إنشاء حساب",
+    "verifyEmailTitle": "تأكيد البريد الإلكتروني",
+    "verifyEmailSubtitle": "أدخل رمز التحقق المرسل إلى بريدك الإلكتروني",
+    "forgotPasswordTitle": "نسيت كلمة المرور",
+    "forgotPasswordSubtitle": "أدخل بريدك الإلكتروني لاستلام رمز إعادة التعيين",
+    "resetPasswordTitle": "إعادة تعيين كلمة المرور",
+    "resetPasswordSubtitle": "أدخل الرمز وكلمة المرور الجديدة",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "sendOtp": "إرسال الرمز",
+    "resendOtp": "إعادة إرسال الرمز",
+    "resendIn": "إعادة الإرسال خلال {seconds} ث",
+    "verifyOtp": "تحقق",
+    "otp": "رمز التحقق",
+    "backToSignIn": "العودة لتسجيل الدخول",
+    "googleAuthErrorTitle": "فشل تسجيل الدخول عبر Google",
+    "googleAuthFailed": "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى.",
+    "googleEmailMissing": "لم يوفر Google عنوان بريد إلكتروني."
   },
   "navigation": {
     "home": "الرئيسية",
@@ -78,7 +95,13 @@
     "tables": "الطاولات",
     "vipRooms": "غرف كبار الشخصيات",
     "sales": "المبيعات",
-    "admin": "المدير"
+    "admin": "المدير",
+    "settings": "الإعدادات",
+    "notifications": "الإشعارات",
+    "profileMenu": "فتح قائمة الملف الشخصي",
+    "viewActivity": "عرض كل النشاط",
+    "vipRoomImageAlt": "نشاط غرفة كبار الشخصيات",
+    "kitchenImageAlt": "نشاط المطبخ"
   },
   "buttons": {
     "submit": "إرسال",

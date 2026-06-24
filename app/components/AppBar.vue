@@ -16,16 +16,8 @@
           rounded="pill"
           width="40"
           height="40"
-          :ripple="false"
-        >
-        </v-btn>
-        <v-btn
-          icon
-          variant="text"
-          color="medium-emphasis"
-          rounded="pill"
-          width="40"
-          height="40"
+          class="navbar-actions__icon"
+          :aria-label="t('dashboard.settings')"
           :ripple="false"
         >
           <v-icon size="20">mdi-cog-outline</v-icon>
@@ -37,6 +29,8 @@
           rounded="pill"
           width="40"
           height="40"
+          class="navbar-actions__icon"
+          :aria-label="t('dashboard.notifications')"
           :ripple="false"
         >
           <v-badge color="error" dot>
@@ -44,30 +38,55 @@
           </v-badge>
         </v-btn>
 
-        <LanguageToggle />
+        <div class="d-flex align-center ga-1 navbar-locale-group">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
 
-        <v-btn
-          variant="flat"
-          color="surface"
-          rounded="pill"
-          width="132"
-          height="40"
-          class="profile-toggle text-none"
-          :ripple="false"
-        >
-          <v-avatar size="28" class="profile-toggle__avatar">
-            <v-img
-              src="https://i.pravatar.cc/150?img=32"
-              alt="Profile"
-              cover
-              width="28"
-              height="28"
-              eager
+        <v-menu location="bottom end" offset="8">
+          <template #activator="{ props: menuProps }">
+            <v-btn
+              v-bind="menuProps"
+              variant="flat"
+              color="surface"
+              rounded="pill"
+              width="132"
+              height="40"
+              class="profile-toggle text-none"
+              :aria-label="t('dashboard.profileMenu')"
+              :ripple="false"
+            >
+              <v-avatar size="28" class="profile-toggle__avatar">
+                <v-img
+                  :src="profileAvatar"
+                  :alt="profileLabel"
+                  cover
+                  width="28"
+                  height="28"
+                />
+              </v-avatar>
+              <span class="profile-toggle__label">{{ profileLabel }}</span>
+              <v-icon size="16" color="medium-emphasis" class="profile-toggle__icon">mdi-chevron-down</v-icon>
+            </v-btn>
+          </template>
+
+          <v-list class="profile-menu py-2" density="compact" min-width="200" rounded="lg">
+            <v-list-item
+              prepend-icon="mdi-account-outline"
+              title="Profile"
+              rounded="lg"
+              @click="handleProfile"
             />
-          </v-avatar>
-          <span class="profile-toggle__label">{{ t('dashboard.admin') }}</span>
-          <v-icon size="16" color="medium-emphasis" class="profile-toggle__icon">mdi-chevron-down</v-icon>
-        </v-btn>
+            <v-list-item
+              prepend-icon="mdi-logout"
+              title="Logout"
+              rounded="lg"
+              :loading="loggingOut"
+              :disabled="loggingOut"
+              @click="handleLogout"
+            />
+          </v-list>
+        </v-menu>
       </div>
     </div>
   </v-app-bar>
@@ -75,8 +94,30 @@
 
 <script setup>
 const { t } = useAppLocale()
+const authStore = useAuthStore()
 
 const searchQuery = ref('')
+const loggingOut = ref(false)
+
+const profileLabel = computed(() => authStore.user?.name || t('dashboard.admin'))
+const profileAvatar = computed(() => authStore.user?.avatar || 'https://i.pravatar.cc/150?img=32')
+
+function handleProfile() {
+  // placeholder
+}
+
+async function handleLogout() {
+  if (loggingOut.value) return
+
+  loggingOut.value = true
+
+  try {
+    await authStore.logout()
+    await navigateTo('/signin')
+  } finally {
+    loggingOut.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -110,6 +151,11 @@ const searchQuery = ref('')
 .navbar-brand,
 .navbar-actions {
   flex: none;
+}
+
+.navbar-locale-group {
+  flex: none;
+  flex-shrink: 0;
 }
 
 .profile-toggle {
@@ -165,6 +211,15 @@ const searchQuery = ref('')
   height: 16px;
 }
 
+.profile-menu {
+  border: unset;
+  box-shadow: unset;
+}
+
+.profile-menu :deep(.v-list-item) {
+  min-height: 40px;
+}
+
 @media (max-width: 768px) {
   .dashboard-navbar :deep(.v-toolbar__content) {
     height: 64px;
@@ -184,8 +239,12 @@ const searchQuery = ref('')
     font-size: 28px !important;
   }
 
-  .navbar-actions .v-btn:not(.profile-toggle):first-child {
+  .navbar-actions .navbar-actions__icon {
     display: none;
+  }
+
+  .navbar-locale-group {
+    display: flex;
   }
 
   .profile-toggle {
@@ -208,8 +267,12 @@ const searchQuery = ref('')
     column-gap: 12px;
   }
 
-  .navbar-actions .v-btn:not(.profile-toggle):first-child {
+  .navbar-actions .navbar-actions__icon {
     display: none;
+  }
+
+  .navbar-locale-group {
+    display: flex;
   }
 
   .profile-toggle {

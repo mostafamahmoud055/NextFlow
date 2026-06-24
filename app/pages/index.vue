@@ -18,4 +18,14 @@ import HomeStats from '~/components/home/HomeStats.vue'
 import HomeAnalytics from '~/components/home/HomeAnalytics.vue'
 import HomeTimeStatus from '~/components/home/HomeTimeStatus.vue'
 import HomeActivityFeed from '~/components/home/HomeActivityFeed.vue'
+
+const { t } = useAppLocale()
+
+definePageMeta({
+  middleware: ['auth', 'verified'],
+})
+
+useHead({
+  title: () => t('dashboard.title'),
+})
 </script>

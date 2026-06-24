@@ -2,7 +2,13 @@
   <v-card class="dashboard-card flex-grow-1" elevation="0">
     <div class="d-flex align-center justify-space-between mb-6">
       <h2 class="text-h6 font-weight-bold dashboard-section-title">{{ t('dashboard.liveActivityFeed') }}</h2>
-      <v-btn icon variant="flat" color="background" size="small">
+      <v-btn
+        icon
+        variant="flat"
+        color="background"
+        size="small"
+        :aria-label="t('dashboard.viewActivity')"
+      >
         <v-icon size="20">mdi-arrow-top-right</v-icon>
       </v-btn>
     </div>
@@ -12,7 +18,12 @@
       <v-sheet color="background" rounded="xl" class="pa-3 d-flex align-center justify-space-between activity-item">
         <div class="d-flex align-center">
           <v-avatar rounded="lg" size="48" class="me-3">
-            <v-img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&h=150&fit=crop" cover eager />
+            <v-img
+              src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&h=150&fit=crop"
+              :alt="t('dashboard.vipRoomImageAlt')"
+              cover
+              loading="lazy"
+            />
           </v-avatar>
           <div>
             <div class="text-body-2 font-weight-bold">{{ t('dashboard.vipRoom', ['5']) }}</div>
@@ -31,7 +42,12 @@
       <v-sheet color="background" rounded="xl" class="pa-3 d-flex align-center justify-space-between activity-item">
         <div class="d-flex align-center">
           <v-avatar rounded="lg" size="48" class="me-3">
-            <v-img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=150&h=150&fit=crop" cover eager />
+            <v-img
+              src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=150&h=150&fit=crop"
+              :alt="t('dashboard.kitchenImageAlt')"
+              cover
+              loading="lazy"
+            />
           </v-avatar>
           <div>
             <div class="text-body-2 font-weight-bold">{{ t('dashboard.kitchen') }}</div>

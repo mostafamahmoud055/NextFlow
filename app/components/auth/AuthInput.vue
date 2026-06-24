@@ -5,6 +5,7 @@
     :label="label"
     :type="fieldType"
     :rules="rules"
+    :error-messages="resolvedErrors"
     :prepend-inner-icon="prependIcon"
     :append-inner-icon="appendIcon"
     variant="outlined"
@@ -39,9 +40,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  errorMessage: {
+    type: [String, Array],
+    default: '',
+  },
 })
 
 const showPassword = ref(false)
+
+const resolvedErrors = computed(() => {
+  if (!props.errorMessage) return []
+  if (Array.isArray(props.errorMessage)) return props.errorMessage
+  return [props.errorMessage]
+})
 
 const fieldType = computed(() => {
   if (!props.showPasswordToggle) return props.type

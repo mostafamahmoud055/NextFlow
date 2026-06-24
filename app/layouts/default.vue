@@ -4,6 +4,7 @@
 
     <v-navigation-drawer
       permanent
+      absolute
       :rail="isRail"
       rail-width="88"
       width="280"
@@ -125,35 +126,6 @@
             </template>
           </v-list>
 
-          <!-- Theme Toggle -->
-          <div class="sidebar-footer mt-auto d-flex justify-center w-100 pb-4" @click.stop>
-            <div class="theme-toggle-track">
-              <div class="theme-switch-icons">
-                <div
-                  class="theme-switch-slot d-flex align-center justify-center"
-                  :class="{ 'active-theme': !isDark }"
-                >
-                  <v-icon size="20">mdi-white-balance-sunny</v-icon>
-                </div>
-                <div
-                  class="theme-switch-slot d-flex align-center justify-center"
-                  :class="{ 'active-theme': isDark }"
-                >
-                  <v-icon size="20">mdi-weather-night</v-icon>
-                </div>
-              </div>
-              <v-switch
-                :model-value="isDark"
-                class="theme-switch"
-                hide-details
-                inset
-                density="compact"
-                @click.stop
-                @update:model-value="onThemeSwitch"
-              />
-            </div>
-          </div>
-
         </v-sheet>
       </div>
     </v-navigation-drawer>
@@ -169,7 +141,6 @@
 <script setup>
 
 const { t } = useAppLocale()
-const { isDark, setTheme } = useAppTheme()
 const route = useRoute()
 
 const isRail = useState('sidebar-rail', () => true)
@@ -178,10 +149,6 @@ function expandDrawer() {
   if (isRail.value) {
     isRail.value = false
   }
-}
-
-function onThemeSwitch(value) {
-  setTheme(value ? 'dark' : 'light')
 }
 
 function onDocumentClick(event) {
@@ -297,8 +264,7 @@ function isActive(item) {
   overflow: hidden;
 }
 
-.sidebar-brand-list,
-.sidebar-footer {
+.sidebar-brand-list {
   flex: none;
 }
 
@@ -447,72 +413,5 @@ function isActive(item) {
 .popout-child-item:hover {
   color: rgb(var(--v-theme-on-surface)) !important;
   background-color: rgba(var(--v-theme-on-surface), 0.04) !important;
-}
-
-/* Theme Toggle */
-.theme-toggle-track {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background-color: rgba(var(--v-theme-on-surface), 0.04);
-  border-radius: 24px;
-  padding: 4px;
-  gap: 4px;
-}
-
-.theme-switch-icons {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  pointer-events: none;
-}
-
-.theme-switch-slot {
-  width: 36px;
-  height: 36px;
-  color: rgba(var(--v-theme-on-surface), 0.4);
-  transition: all 0.2s ease;
-}
-
-.theme-switch-slot.active-theme {
-  background-color: rgb(var(--v-theme-surface)) !important;
-  color: rgb(var(--v-theme-primary)) !important;
-  box-shadow: 0 2px 8px rgba(var(--v-theme-on-surface), 0.08);
-  border-radius: 50%;
-}
-
-.v-theme--dark .theme-switch-slot.active-theme {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.theme-switch {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 4px;
-  box-sizing: border-box;
-}
-
-.theme-switch :deep(.v-selection-control) {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-}
-
-.theme-switch :deep(.v-selection-control__wrapper) {
-  width: 100%;
-  height: 100%;
-}
-
-.theme-switch :deep(.v-switch__track),
-.theme-switch :deep(.v-switch__thumb) {
-  opacity: 0;
-}
-
-.theme-switch :deep(.v-selection-control__input) {
-  width: 100%;
-  height: 100%;
 }
 </style>

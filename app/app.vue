@@ -1,6 +1,7 @@
 <template>
   <v-app :dir="dir">
     <NuxtLayout>
+      <GlobalSnackbar />
       <NuxtPage />
     </NuxtLayout>
   </v-app>
@@ -12,14 +13,24 @@ import {
   resolveLocale,
 } from '~/utils/localeHelpers'
 
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const dir = computed(() => getLocaleDirection(resolveLocale(locale.value)))
 
 const i18nHead = useLocaleHead({
   dir: true,
   lang: true,
-  seo: false,
+  seo: true,
 })
 
 useHead(i18nHead)
+
+useHead({
+  titleTemplate: (title) => (title ? `${title} · ${t('common.appName')}` : t('common.appName')),
+})
+
+useSeoMeta({
+  description: () => t('common.metaDescription'),
+  ogTitle: () => t('common.appName'),
+  ogDescription: () => t('common.metaDescription'),
+})
 </script>

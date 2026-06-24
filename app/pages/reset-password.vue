@@ -1,28 +1,32 @@
 <template>
   <AuthCard>
     <AuthHeader
-      :title="t('auth.signUpTitle')"
-      :subtitle="t('auth.signUpSubtitle')"
+      :title="t('auth.resetPasswordTitle')"
+      :subtitle="t('auth.resetPasswordSubtitle')"
     />
 
     <v-form @submit.prevent="handleSubmit">
-      <AuthInput
-        v-model="form.name"
-        :label="t('auth.fullName')"
-        prepend-icon="mdi-account-outline"
-        :error-message="errors.name"
-        class="animate"
-        style="--delay: 0"
-      />
-
       <AuthInput
         v-model="form.email"
         :label="t('auth.email')"
         type="email"
         prepend-icon="mdi-email-outline"
         :error-message="errors.email"
+        class="animate"
+        style="--delay: 0"
+      />
+
+      <AuthInput
+        v-model="form.otp"
+        :label="t('auth.otp')"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        prepend-icon="mdi-shield-key-outline"
+        :error-message="errors.otp"
         class="animate mt-2"
         style="--delay: 1"
+        @update:model-value="onOtpInput"
       />
 
       <AuthInput
@@ -50,28 +54,20 @@
         block
         size="large"
         color="primary"
-        rounded="pill"  
-        :loading="authStore.loading"
+        rounded="pill"
+        :loading="loading"
         class="animate text-none mt-4"
-        style="--delay: 4"
+        style="--delay: 5"
       >
-        {{ t('auth.createAccount') }}
+        {{ t('auth.resetPassword') }}
       </v-btn>
     </v-form>
-
-    <AuthSocialButtons
-      mode="signup"
-      class="animate"
-      style="--delay: 5"
-      @google="handleSocial"
-    />
 
     <p
       class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 animate auth-footer-text"
       style="--delay: 6"
     >
-      {{ t('auth.hasAccount') }}
-      <NuxtLink to="/signin" class="auth-link ms-1">{{ t('auth.signIn') }}</NuxtLink>
+      <NuxtLink to="/signin" class="auth-link">{{ t('auth.backToSignIn') }}</NuxtLink>
     </p>
   </AuthCard>
 </template>
@@ -79,8 +75,8 @@
 <script setup>
 import {
   hasErrors,
-  validateRegisterForm,
-} from "@/utils/validation/AuthValidation";
+  validateResetPasswordForm,
+} from "@/utils/validation/OtpValidation";
 
 definePageMeta({
   layout: "blank",
@@ -92,39 +88,42 @@ definePageMeta({
 });
 
 const { t } = useAppLocale();
+const route = useRoute();
 const authStore = useAuthStore();
 
+const isDev = import.meta.dev;
+
 const form = reactive({
-  name: "",
-  email: "",
+  email: String(route.query.email || ""),
+  otp: "",
   password: "",
   password_confirmation: "",
 });
 
 const errors = ref({});
+const loading = ref(false);
+
+function onOtpInput(value) {
+  form.otp = String(value || "").replace(/\D/g, "").slice(0, 6);
+}
 
 async function handleSubmit() {
-  errors.value = validateRegisterForm(form);
+  errors.value = validateResetPasswordForm(form);
   if (hasErrors(errors.value)) return;
 
-  const result = await authStore.register({
-    name: form.name,
+  loading.value = true;
+
+  const result = await authStore.resetPassword({
     email: form.email,
+    otp: form.otp,
     password: form.password,
     password_confirmation: form.password_confirmation,
   });
 
+  loading.value = false;
+
   if (result.error) return;
 
-  if (!authStore.user?.email_verified_at) {
-    await navigateTo("/verify-email");
-    return;
-  }
-
-  await navigateTo("/");
-}
-
-function handleSocial() {
-  authStore.loginWithGoogle();
+  await navigateTo("/signin");
 }
 </script>

@@ -113,8 +113,6 @@ body {
 
   .app-layout .v-navigation-drawer {
     top: 64px !important;
-    height: calc(100dvh - 64px) !important;
-    max-height: calc(100dvh - 64px) !important;
   }
 
   .app-layout .v-main {
@@ -192,14 +190,16 @@ body {
   font-family: 'Cairo', 'Inter', sans-serif;
 }
 
+.app-layout {
+  position: relative;
+}
+
 .app-layout .v-app-bar {
   height: 80px !important;
 }
 
 .app-layout .v-navigation-drawer {
   top: 80px !important;
-  height: calc(100vh - 80px) !important;
-  max-height: calc(100vh - 80px) !important;
   transition: none !important;
 }
 

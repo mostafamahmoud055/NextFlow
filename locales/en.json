@@ -1,6 +1,7 @@
 {
   "common": {
     "appName": "Next Flow",
+    "metaDescription": "Next Flow operational dashboard for sales, inventory, and team management.",
     "orContinueWith": "or continue with",
     "loading": "Loading...",
     "search": "Search..."
@@ -21,7 +22,23 @@
     "hasAccount": "Already have an account?",
     "signInWithGoogle": "Sign in with Google",
     "signUpWithGoogle": "Sign up with Google",
-    "createAccount": "Create account"
+    "createAccount": "Create account",
+    "verifyEmailTitle": "Verify your email",
+    "verifyEmailSubtitle": "Enter the verification code sent to your email",
+    "forgotPasswordTitle": "Forgot password",
+    "forgotPasswordSubtitle": "Enter your email to receive a reset code",
+    "resetPasswordTitle": "Reset password",
+    "resetPasswordSubtitle": "Enter the code and your new password",
+    "resetPassword": "Reset password",
+    "sendOtp": "Send code",
+    "resendOtp": "Resend code",
+    "resendIn": "Resend in {seconds}s",
+    "verifyOtp": "Verify",
+    "otp": "Verification code",
+    "backToSignIn": "Back to sign in",
+    "googleAuthErrorTitle": "Google sign-in failed",
+    "googleAuthFailed": "Could not sign in with Google. Please try again.",
+    "googleEmailMissing": "Google did not provide an email address."
   },
   "navigation": {
     "home": "Home",
@@ -78,7 +95,13 @@
     "tables": "Tables",
     "vipRooms": "VIP Rooms",
     "sales": "Sales",
-    "admin": "Admin"
+    "admin": "Admin",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "profileMenu": "Open profile menu",
+    "viewActivity": "View all activity",
+    "vipRoomImageAlt": "VIP room activity",
+    "kitchenImageAlt": "Kitchen activity"
   },
   "buttons": {
     "submit": "Submit",

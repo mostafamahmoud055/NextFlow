@@ -5,28 +5,24 @@
       :subtitle="t('auth.signInSubtitle')"
     />
 
-    <v-form
-      ref="formRef"
-      v-model="isValid"
-      @submit.prevent="handleSubmit"
-    >
+    <v-form @submit.prevent="handleSubmit">
       <AuthInput
-        v-model="email"
+        v-model="form.email"
         :label="t('auth.email')"
         type="email"
         prepend-icon="mdi-email-outline"
-        :rules="emailRules"
+        :error-message="errors.email"
         class="animate"
         style="--delay: 0"
       />
 
       <AuthInput
-        v-model="password"
+        v-model="form.password"
         :label="t('auth.password')"
         prepend-icon="mdi-lock-outline"
-        :rules="passwordRules"
         show-password-toggle
-        class="animate"
+        :error-message="errors.password"
+        class="animate mt-2"
         style="--delay: 1"
       />
 
@@ -34,9 +30,13 @@
         class="d-flex justify-end mb-4 mb-md-6 mt-2 animate auth-forgot-link"
         style="--delay: 2"
       >
-        <a href="#" class="text-caption text-medium-emphasis text-decoration-none">
+        <NuxtLink
+          to="/forgot-password"
+          class="text-caption text-medium-emphasis text-decoration-none"
+          :aria-label="t('auth.forgotPassword')"
+        >
           {{ t('auth.forgotPassword') }}
-        </a>
+        </NuxtLink>
       </div>
 
       <v-btn
@@ -45,8 +45,7 @@
         size="large"
         color="primary"
         rounded="pill"
-        :loading="loading"
-        :disabled="!isValid"
+        :loading="authStore.loading"
         class="animate text-none"
         style="--delay: 3"
       >
@@ -72,33 +71,50 @@
 </template>
 
 <script setup>
+import {
+  hasErrors,
+  validateLoginForm,
+} from "@/utils/validation/AuthValidation";
+
 definePageMeta({
-  layout: 'blank',
+  layout: "blank",
+  middleware: ["guest"],
   pageTransition: {
-    name: 'auth-slide',
-    mode: 'out-in',
+    name: "auth-slide",
+    mode: "out-in",
   },
-})
+});
 
-const { t } = useAppLocale()
-const { emailRules, passwordRules } = useAuthRules()
+const { t } = useAppLocale();
+const authStore = useAuthStore();
 
-const formRef = ref(null)
-const isValid = ref(false)
-const loading = ref(false)
-const email = ref('')
-const password = ref('')
+const form = reactive({
+  email: "",
+  password: "",
+});
+
+const errors = ref({});
 
 async function handleSubmit() {
-  const { valid } = await formRef.value.validate()
-  if (!valid) return
+  errors.value = validateLoginForm(form);
+  if (hasErrors(errors.value)) return;
 
-  loading.value = true
-  await new Promise(resolve => setTimeout(resolve, 1200))
-  loading.value = false
+  const result = await authStore.login({
+    email: form.email,
+    password: form.password,
+  });
+
+  if (result.error) return;
+
+  if (!authStore.user?.email_verified_at) {
+    await navigateTo("/verify-email");
+    return;
+  }
+
+  await navigateTo("/");
 }
 
 function handleSocial() {
-  console.log('Sign in with Google')
+  authStore.loginWithGoogle();
 }
 </script>

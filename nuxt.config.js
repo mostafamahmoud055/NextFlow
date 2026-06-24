@@ -1,25 +1,54 @@
 import { LOCALE_INIT_SCRIPT } from './app/utils/localeHelpers.js'
 import { THEME_INIT_SCRIPT } from './app/utils/themeHelpers.js'
 
+const appBaseUrl = process.env.NUXT_PUBLIC_I18N_BASE_URL
+  || process.env.NUXT_PUBLIC_APP_URL
+  || 'http://localhost:3000'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV === 'development' },
 
   future: {
     compatibilityVersion: 4,
   },
 
+  hooks: {
+    'nitro:config'(nitroConfig) {
+      nitroConfig.runtimeConfig ??= {}
+      nitroConfig.runtimeConfig.public ??= {}
+      nitroConfig.runtimeConfig.public.i18n ??= {}
+      nitroConfig.runtimeConfig.public.i18n.baseUrl = appBaseUrl
+    },
+  },
+
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE,
+      apiOrigin: process.env.NUXT_PUBLIC_API_ORIGIN,
+      googleRedirectUri: process.env.NUXT_PUBLIC_GOOGLE_REDIRECT_URI,
+    },
+  },
+
   css: [
     '~/assets/styles/theme.css',
-    '~/assets/styles/auth.css',
+    '@mdi/font/css/materialdesignicons.min.css',
   ],
 
   app: {
     head: {
+      title: 'Next Flow',
+      meta: [
+        { name: 'description', content: 'Next Flow operational dashboard for sales, inventory, and team management.' },
+      ],
       link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&display=block',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cairo:wght@400;500;600;700&display=swap',
+          media: 'print',
+          onload: "this.media='all'",
         },
       ],
       script: [
@@ -40,6 +69,7 @@ export default defineNuxtConfig({
   },
 
   modules: [
+    '@pinia/nuxt',
     '@nuxtjs/i18n',
     'vuetify-nuxt-module',
   ],
@@ -47,6 +77,7 @@ export default defineNuxtConfig({
   i18n: {
     defaultLocale: 'en',
     strategy: 'no_prefix',
+    baseUrl: appBaseUrl,
     restructureDir: '.',
     langDir: 'locales',
     detectBrowserLanguage: false,
@@ -75,7 +106,8 @@ export default defineNuxtConfig({
     moduleOptions: {},
     vuetifyOptions: {
       icons: {
-        defaultSet: 'mdi',
+        defaultSet: "mdi",
+        sets: ["mdi"],
       },
       theme: {
         defaultTheme: 'light',
