@@ -16,11 +16,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
-
-      - name: Use npm 11
-        run: npm install -g npm@11.6.0
 
       - name: Install dependencies
         run: npm ci
@@ -42,16 +39,18 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            npm install -g npm@11.6.0
-
             npm ci
+
+            rm -rf .output
 
             npm run build
 
             if pm2 describe nextflow > /dev/null; then
-              pm2 restart nextflow
+              pm2 restart nextflow --update-env
             else
-              pm2 start .output/server/index.mjs --name nextflow
+              HOST=0.0.0.0 PORT=3000 pm2 start .output/server/index.mjs \
+                --name nextflow \
+                --interpreter node
             fi
 
             pm2 save
