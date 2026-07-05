@@ -36,15 +36,17 @@ jobs:
             echo "🏗️ Build Nuxt..."
             npm run build
 
-            echo "🚀 Reload PM2..."
+            echo "🚀 Reload PM2 safely..."
+            NODE_BIN="$(command -v node)"
+
             if pm2 describe nextflow > /dev/null; then
               pm2 reload nextflow --update-env
             else
               HOST=0.0.0.0 PORT=3000 pm2 start .output/server/index.mjs \
                 --name nextflow \
-                --interpreter node
+                --interpreter "$NODE_BIN"
             fi
 
             pm2 save
 
-            echo "✅ Deploy completed"
+            echo "✅ Deploy completed successfully"
