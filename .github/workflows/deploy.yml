@@ -30,6 +30,23 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
+            echo "🟢 Select Node version..."
+            export NVM_DIR="$HOME/.nvm"
+            if [ -s "$NVM_DIR/nvm.sh" ]; then
+              . "$NVM_DIR/nvm.sh"
+              nvm install
+              nvm use
+            fi
+
+            NODE_VERSION="$(node -v | sed 's/^v//')"
+            NODE_MAJOR="${NODE_VERSION%%.*}"
+            if [ "$NODE_MAJOR" -lt 22 ]; then
+              echo "❌ Node >= 22.12 is required (current: v${NODE_VERSION})"
+              echo "Install nvm on the VPS, then rerun deploy."
+              exit 1
+            fi
+            echo "Using Node v${NODE_VERSION}"
+
             echo "📦 Install dependencies..."
             npm ci
 
