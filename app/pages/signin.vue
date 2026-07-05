@@ -30,13 +30,13 @@
         class="d-flex justify-end mb-4 mb-md-6 mt-2 animate auth-forgot-link"
         style="--delay: 2"
       >
-        <NuxtLink
+        <!-- <NuxtLink
           to="/forgot-password"
           class="text-caption text-medium-emphasis text-decoration-none"
           :aria-label="t('auth.forgotPassword')"
         >
           {{ t('auth.forgotPassword') }}
-        </NuxtLink>
+        </NuxtLink> -->
       </div>
 
       <v-btn
@@ -53,7 +53,7 @@
       </v-btn>
     </v-form>
 
-    <AuthSocialButtons
+    <!-- <AuthSocialButtons
       mode="signin"
       class="animate"
       style="--delay: 4"
@@ -66,7 +66,7 @@
     >
       {{ t('auth.noAccount') }}
       <NuxtLink to="/signup" class="auth-link ms-1">{{ t('auth.signUp') }}</NuxtLink>
-    </p>
+    </p> -->
   </AuthCard>
 </template>
 
@@ -106,10 +106,6 @@ async function handleSubmit() {
 
   if (result.error) return;
 
-  if (!authStore.user?.email_verified_at) {
-    await navigateTo("/verify-email");
-    return;
-  }
 
   await navigateTo("/");
 }

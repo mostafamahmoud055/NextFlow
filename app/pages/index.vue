@@ -22,7 +22,7 @@ import HomeActivityFeed from '~/components/home/HomeActivityFeed.vue'
 const { t } = useAppLocale()
 
 definePageMeta({
-  middleware: ['auth', 'verified'],
+  middleware: ['auth', 'verified', 'tenant'],
 })
 
 useHead({

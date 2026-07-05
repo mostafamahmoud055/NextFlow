@@ -35,6 +35,7 @@
     "resendIn": "إعادة الإرسال خلال {seconds} ث",
     "verifyOtp": "تحقق",
     "otp": "رمز التحقق",
+    "logout": "تسجيل الخروج",
     "backToSignIn": "العودة لتسجيل الدخول",
     "googleAuthErrorTitle": "فشل تسجيل الدخول عبر Google",
     "googleAuthFailed": "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى.",
@@ -129,6 +130,96 @@
     "confirmPassword": {
       "required": "يرجى تأكيد كلمة المرور",
       "mismatch": "كلمتا المرور غير متطابقتين"
+    },
+    "setup": {
+      "companyCode": {
+        "required": "كود الشركة مطلوب"
+      },
+      "nameEn": {
+        "required": "الاسم (إنجليزي) مطلوب"
+      },
+      "nameAr": {
+        "required": "الاسم (عربي) مطلوب"
+      },
+      "email": {
+        "invalid": "يجب إدخال بريد إلكتروني صالح"
+      },
+      "branchCode": {
+        "required": "كود الفرع مطلوب"
+      },
+      "branchType": {
+        "required": "نوع الفرع مطلوب",
+        "invalid": "نوع فرع غير صالح"
+      },
+
+      "fiscalYearName": {
+        "required": "اسم السنة المالية مطلوب"
+      },
+      "startDate": {
+        "required": "تاريخ البداية مطلوب",
+        "invalid": "تاريخ البداية غير صالح"
+      },
+      "endDate": {
+        "required": "تاريخ النهاية مطلوب",
+        "invalid": "تاريخ النهاية غير صالح",
+        "afterStart": "يجب أن يكون تاريخ النهاية في نفس يوم البداية أو بعده"
+      },
+      "currency": {
+        "required": "العملة الأساسية مطلوبة",
+        "invalid": "عملة غير صالحة"
+      },
+      "timezone": {
+        "required": "المنطقة الزمنية مطلوبة",
+        "invalid": "منطقة زمنية غير صالحة"
+      },
+
+      "taxRate": {
+        "required": "نسبة الضريبة مطلوبة",
+        "range": "يجب أن تكون نسبة الضريبة بين 0 و 100"
+      },
+      "effectiveDate": {
+        "required": "تاريخ السريان مطلوب",
+        "invalid": "تاريخ السريان غير صالح"
+      },
+      "roleId": {
+        "required": "معرف الدور مطلوب",
+        "invalid": "يجب أن يكون معرف الدور رقماً موجباً"
+      },
+      "roleIds": {
+        "required": "مطلوب معرف دور واحد على الأقل"
+      },
+      "roles": {
+        "required": "مطلوب دور واحد على الأقل"
+      },
+      "roleName": {
+        "required": "اسم الدور مطلوب"
+      },
+      "permissions": {
+        "required": "مطلوبة صلاحية واحدة على الأقل"
+      },
+      "warehouseCode": {
+        "required": "كود المستودع مطلوب"
+      },
+      "warehouseName": {
+        "required": "اسم المستودع مطلوب"
+      },
+      "branchId": {
+        "required": "معرف الفرع مطلوب",
+        "invalid": "يجب أن يكون معرف الفرع رقماً موجباً"
+      },
+      "warehouseType": {
+        "required": "نوع المستودع مطلوب",
+        "invalid": "نوع مستودع غير صالح"
+      },
+      "minOneItem": {
+        "required": "مطلوب إدخال واحد على الأقل"
+      },
+      "duplicateCode": {
+        "required": "هذا الكود مستخدم بالفعل في النموذج"
+      },
+      "duplicateEmail": {
+        "required": "هذا البريد مستخدم بالفعل في النموذج"
+      }
     }
   },
   "locale": {
@@ -141,5 +232,90 @@
     "switchToDark": "التبديل إلى الوضع الداكن",
     "light": "فاتح",
     "dark": "داكن"
+  },
+  "tenant": {
+    "selectTitle": "اختر شركة",
+    "selectSubtitle": "اختر الشركة التي تريد العمل بها",
+    "switch": "تبديل الشركة",
+    "noCompanies": "لا توجد شركات متاحة لحسابك حتى الآن."
+  },
+  "setup": {
+    "title": "إعداد مساحة العمل",
+    "subtitle": "أكمل الخطوات التالية لتفعيل مساحة عمل ERP.",
+    "installTitle": "أنشئ شركتك",
+    "installSubtitle": "ابدأ بإنشاء شركتك الأولى ومساحة المستأجر.",
+    "createCompany": "إنشاء شركة",
+    "saveContinue": "حفظ ومتابعة",
+    "back": "رجوع",
+    "backTo": "العودة إلى {step}",
+    "revisitHint": "حفظ هذه الخطوة سيُعيد تعيين التقدم في الخطوات التالية. ستحتاج لإكمالها مرة أخرى.",
+    "addMore": "إضافة المزيد",
+    "remove": "حذف",
+    "branchNumber": "فرع #{n}",
+    "branchNumberNamed": "فرع #{n} — {name}",
+    "taxNumber": "ضريبة #{n}",
+    "taxNumberNamed": "ضريبة #{n} — {name}",
+    "userNumber": "مستخدم #{n}",
+    "userNumberNamed": "مستخدم #{n} — {name}",
+    "permissionNumber": "مجموعة صلاحيات #{n}",
+    "permissionNumberNamed": "مجموعة صلاحيات #{n} — {name}",
+    "warehouseNumber": "مستودع #{n}",
+    "warehouseNumberNamed": "مستودع #{n} — {name}",
+    "continueToWarehouses": "المتابعة إلى المستودعات",
+    "goLive": "إنهاء والتشغيل",
+    "finishMessage": "اكتملت جميع الخطوات المطلوبة. أنهِ الإعداد للوصول إلى لوحة التحكم.",
+    "missingTenant": "لم يتم اختيار مستأجر. حدّث الصفحة أو تواصل مع الدعم.",
+    "companyCode": "كود الشركة",
+    "nameEn": "الاسم (إنجليزي)",
+    "nameAr": "الاسم (عربي)",
+    "commercialName": "الاسم التجاري",
+    "phone": "الهاتف",
+    "country": "الدولة",
+    "city": "المدينة",
+    "companyConfigureHint": "راجع تفاصيل شركتك أدناه. يمكنك تحديثها الآن أو المتابعة وتعديلها لاحقاً من الإعدادات.",
+    "branchCode": "كود الفرع",
+    "branchType": "نوع الفرع",
+    "branchTypes": {
+      "main": "رئيسي",
+      "branch": "فرع"
+    },
+    "fiscalYearName": "اسم السنة المالية",
+    "startDate": "تاريخ البداية",
+    "endDate": "تاريخ النهاية",
+    "currency": "العملة الأساسية",
+    "timezone": "المنطقة الزمنية",
+    "taxRate": "نسبة الضريبة (%)",
+    "effectiveDate": "تاريخ السريان",
+    "roleIds": "معرفات الأدوار (مفصولة بفواصل)",
+    "roleIdsHint": "استخدم معرفات الأدوار من بذرة RBAC.",
+    "roles": "الأدوار",
+    "roleName": "اسم الدور",
+    "addRole": "إضافة دور",
+    "roleId": "معرف الدور",
+    "permissions": "الصلاحيات (مفصولة بفواصل)",
+    "permissionsHint": "أسماء أو معرفات الصلاحيات، مثل roles.view",
+    "userAccessHierarchy": "هيكل الأدوار",
+    "warehouseCode": "كود المستودع",
+    "warehouseName": "اسم المستودع",
+    "branchName": "اسم الفرع",
+    "warehouseType": "نوع المستودع",
+    "warehouseTypes": {
+      "main": "مستودع رئيسي",
+      "sub": "مستودع فرعي"
+    },
+    "noRoles": "لا توجد أدوار معينة",
+    "noUsersOverview": "لم يتم العثور على مستخدمين بأدوار لهذه الشركة.",
+    "steps": {
+      "company": "الشركة",
+      "branches": "الفروع",
+      "fiscal_year": "السنة المالية",
+      "currency": "العملة",
+      "taxes": "الضرائب",
+      "users": "المستخدمون",
+      "permissions": "الصلاحيات",
+      "user_access_overview": "نظرة الوصول",
+      "warehouses": "المستودعات",
+      "finish": "إنهاء"
+    }
   }
 }

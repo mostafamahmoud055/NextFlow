@@ -71,6 +71,20 @@
         {{ cooldown > 0 ? t('auth.resendIn', { seconds: cooldown }) : t('auth.resendOtp') }}
       </v-btn>
     </v-form>
+
+    <p
+      class="text-center text-body-2 text-medium-emphasis mt-8 mb-0 animate auth-footer-text"
+      style="--delay: 4"
+    >
+      <a
+        href="#"
+        class="auth-link"
+        :class="{ 'pe-none opacity-60': loggingOut }"
+        @click.prevent="handleLogout"
+      >
+        {{ t('auth.logout') }}
+      </a>
+    </p>
   </AuthCard>
 </template>
 
@@ -82,7 +96,7 @@ import {
 
 definePageMeta({
   layout: "blank",
-  middleware: ["auth"],
+  middleware: ["auth", "verified"],
   pageTransition: {
     name: "auth-slide",
     mode: "out-in",
@@ -92,13 +106,11 @@ definePageMeta({
 const { t } = useAppLocale();
 const authStore = useAuthStore();
 
-await authStore.initAuth();
 
-if (authStore.user?.email_verified_at) {
-  await navigateTo("/");
-}
+// await authStore.initAuth();
 
-const isDev = import.meta.dev;
+
+
 
 const form = reactive({ otp: "" });
 const errors = ref({});
@@ -106,6 +118,7 @@ const sending = ref(false);
 const verifying = ref(false);
 const otpSent = ref(false);
 const cooldown = ref(0);
+const loggingOut = ref(false);
 
 let cooldownTimer = null;
 
@@ -140,6 +153,7 @@ async function handleSendOtp() {
   startCooldown();
 }
 
+
 async function handleVerify() {
   errors.value = validateVerifyOtpForm(form);
   if (hasErrors(errors.value)) return;
@@ -153,9 +167,23 @@ async function handleVerify() {
     return;
   }
 
+
   verifying.value = false;
 
   await navigateTo("/");
+}
+
+async function handleLogout() {
+  if (loggingOut.value) return;
+
+  loggingOut.value = true;
+
+  try {
+    await authStore.logout();
+    await navigateTo("/signin");
+  } finally {
+    loggingOut.value = false;
+  }
 }
 
 onMounted(() => {

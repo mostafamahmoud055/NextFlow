@@ -84,7 +84,10 @@ import {
 
 definePageMeta({
   layout: "blank",
-  middleware: ["guest"],
+  // middleware: () => {
+  //   return navigateTo("/signin");
+  // },
+  middleware: ["auth", "verified","setup"],
   pageTransition: {
     name: "auth-slide",
     mode: "out-in",

@@ -19,6 +19,16 @@ function getXsrfToken(cookieHeader) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+function getLocaleFromCookie(cookieHeader) {
+  if (!cookieHeader) return "en";
+
+  const match = cookieHeader.match(/(?:^|;\s*)nextflow-locale=([^;]+)/);
+  if (!match) return "en";
+
+  const value = decodeURIComponent(match[1] || "").trim();
+  return value || "en";
+}
+
 export default defineNuxtPlugin({
   name: "api",
   order: -20,
@@ -36,6 +46,9 @@ export default defineNuxtPlugin({
           Accept: "application/json",
           ...toHeaderObject(options.headers),
         };
+
+        const cookieHeader = import.meta.server ? serverCookie : document.cookie;
+        options.headers["nextflow-locale"] = getLocaleFromCookie(cookieHeader);
 
         if (import.meta.server) {
           if (serverCookie && !options.headers.cookie) {

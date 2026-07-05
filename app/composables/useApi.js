@@ -78,6 +78,11 @@ export const useApi = () => {
   const { executeRequest } = useRequestQueue();
   const { showSnackbar } = useSnackbar();
 
+  // Read the selected tenant straight from the cookie (not the auth store) to
+  // keep a single source of truth and avoid a circular import: the auth store
+  // already depends on useApi.
+  const tenantCookie = useCookie("nf_tenant");
+
   const apiDefaults = {
     baseURL: config.public.apiBase,
     credentials: "include",
@@ -143,9 +148,39 @@ export const useApi = () => {
       ...options,
       params: toParams(options.params),
     };
-  
-    const resolvedUrl = buildUrl(url, requestOptions.params);
-  
+
+    let path = url;
+
+    // Tenant-scoped calls are prefixed with /tenant/{uuid}. The baseURL already
+    // ends with /api, so the final URL becomes /api/tenant/{uuid}/...
+    if (requestOptions.tenant) {
+      const tenantId = tenantCookie.value?.id;
+
+      if (!tenantId) {
+        const error = {
+          message: "No company selected",
+          status: 409,
+          errors: { tenant: ["No company selected"] },
+          data: null,
+        };
+
+        if (!requestOptions.silent) {
+          showSnackbar(error.message, error.status);
+        }
+
+        return Promise.resolve({
+          data: null,
+          error,
+          status: "error",
+          refresh: () => Promise.resolve(),
+        });
+      }
+
+      path = `/tenant/${tenantId}${url.startsWith("/") ? url : `/${url}`}`;
+    }
+
+    const resolvedUrl = buildUrl(path, requestOptions.params);
+
     return runRequest(
       (signal) => callApi(resolvedUrl, requestOptions, signal),
       resolvedUrl,

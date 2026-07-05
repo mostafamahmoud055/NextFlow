@@ -10,6 +10,22 @@
 
       <div class="d-flex align-center ga-2 navbar-actions">
         <v-btn
+          v-if="authStore.hasTenant"
+          to="/select-company"
+          variant="flat"
+          color="surface"
+          rounded="pill"
+          height="40"
+          class="company-switch text-none"
+          :aria-label="t('tenant.switch')"
+          :ripple="false"
+        >
+          <v-icon size="18" start>mdi-office-building-outline</v-icon>
+          <span class="company-switch__label">{{ currentCompanyName }}</span>
+          <v-icon size="16" color="medium-emphasis" end>mdi-swap-horizontal</v-icon>
+        </v-btn>
+
+        <v-btn
           icon
           variant="text"
           color="medium-emphasis"
@@ -101,6 +117,7 @@ const loggingOut = ref(false)
 
 const profileLabel = computed(() => authStore.user?.name || t('dashboard.admin'))
 const profileAvatar = computed(() => authStore.user?.avatar || 'https://i.pravatar.cc/150?img=32')
+const currentCompanyName = computed(() => authStore.tenant?.name || t('tenant.switch'))
 
 function handleProfile() {
   // placeholder
@@ -211,6 +228,20 @@ async function handleLogout() {
   height: 16px;
 }
 
+.company-switch {
+  flex: none;
+  max-width: 200px;
+  padding-inline: 12px !important;
+}
+
+.company-switch__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .profile-menu {
   border: unset;
   box-shadow: unset;
@@ -258,6 +289,10 @@ async function handleLogout() {
 
   .profile-toggle__label,
   .profile-toggle__icon {
+    display: none;
+  }
+
+  .company-switch__label {
     display: none;
   }
 }
