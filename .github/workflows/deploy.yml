@@ -1,4 +1,4 @@
-name: Deploy NextFlow
+name: Deploy
 
 on:
   push:
@@ -10,8 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -23,17 +26,25 @@ jobs:
 
             cd /var/www/NextFlow
 
-            echo "Pull latest code..."
+            echo "📥 Pull latest code..."
             git fetch origin main
             git reset --hard origin/main
 
-            echo "Install dependencies..."
-            npm ci --omit=dev
+            echo "📦 Install dependencies..."
+            npm ci
 
-            echo "Build app..."
+            echo "🏗️ Build Nuxt..."
             npm run build
 
-            echo "Restart PM2..."
-            pm2 reload nextflow || pm2 start .output/server/index.mjs --name nextflow
+            echo "🚀 Reload PM2..."
+            if pm2 describe nextflow > /dev/null; then
+              pm2 reload nextflow --update-env
+            else
+              HOST=0.0.0.0 PORT=3000 pm2 start .output/server/index.mjs \
+                --name nextflow \
+                --interpreter node
+            fi
 
             pm2 save
+
+            echo "✅ Deploy completed"
