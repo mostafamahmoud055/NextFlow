@@ -24,7 +24,7 @@
       {{ t("setup.noRoles") }}
     </v-alert>
 
-    <v-expansion-panels v-else v-model="openPanels" multiple class="mb-4">
+    <v-expansion-panels v-else v-model="openPanel" class="mb-4">
       <v-expansion-panel v-for="(role, index) in form.roles" :key="index">
         <v-expansion-panel-title>
           {{ roleTitle(index, role) }}
@@ -115,7 +115,7 @@ const { fetchApi } = useApi();
 const errors = ref({});
 const permissionGroups = ref([]);
 const permissionsLoading = ref(false);
-const openPanels = ref([0]);
+const openPanel = ref(0);
 
 const form = reactive({
   roles: [createRole()],
@@ -145,12 +145,12 @@ function applyDraft(draft) {
       ...role,
       permissions: Array.isArray(role.permissions) ? [...role.permissions] : [],
     }));
-    openPanels.value = form.roles.map((_, index) => index);
+    openPanel.value = 0;
     return;
   }
 
   form.roles = [createRole()];
-  openPanels.value = [0];
+  openPanel.value = 0;
 }
 
 async function loadPermissions() {
@@ -185,11 +185,15 @@ function submit() {
 
 function addRole() {
   form.roles.push(createRole());
-  openPanels.value = [...openPanels.value, form.roles.length - 1];
+  openPanel.value = form.roles.length - 1;
 }
 
 function removeRole(index) {
   form.roles.splice(index, 1);
-  openPanels.value = form.roles.map((_, itemIndex) => itemIndex);
+  if (openPanel.value === index) {
+    openPanel.value = Math.max(0, index - 1);
+  } else if (openPanel.value > index) {
+    openPanel.value--;
+  }
 }
 </script>

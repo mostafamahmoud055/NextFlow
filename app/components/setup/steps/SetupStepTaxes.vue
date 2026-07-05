@@ -10,7 +10,7 @@
       {{ listError(errors, 'taxes')[0] }}
     </v-alert>
 
-    <v-expansion-panels v-model="openPanel" multiple class="mb-4">
+    <v-expansion-panels v-model="openPanel" class="mb-4">
       <v-expansion-panel
         v-for="(tax, index) in form.taxes"
         :key="index"
@@ -88,7 +88,7 @@ const emit = defineEmits(["save"]);
 const { t } = useAppLocale();
 
 const errors = ref({});
-const openPanel = ref([0]);
+const openPanel = ref(0);
 
 const form = reactive({
   taxes: [createTax(0)],
@@ -105,24 +105,28 @@ function panelTitle(index, tax) {
 function applyDraft(draft) {
   if (Array.isArray(draft?.taxes) && draft.taxes.length) {
     form.taxes = draft.taxes.map((tax) => ({ ...tax }));
-    openPanel.value = form.taxes.map((_, index) => index);
+    openPanel.value = 0;
     return;
   }
 
   form.taxes = [createTax(0)];
-  openPanel.value = [0];
+  openPanel.value = 0;
 }
 
 watch(() => props.draft, applyDraft, { immediate: true });
 
 function addTax() {
   form.taxes.push(createTax(form.taxes.length));
-  openPanel.value = [...openPanel.value, form.taxes.length - 1];
+  openPanel.value = form.taxes.length - 1;
 }
 
 function removeTax(index) {
   form.taxes.splice(index, 1);
-  openPanel.value = form.taxes.map((_, itemIndex) => itemIndex);
+  if (openPanel.value === index) {
+    openPanel.value = Math.max(0, index - 1);
+  } else if (openPanel.value > index) {
+    openPanel.value--;
+  }
 }
 
 function submit() {

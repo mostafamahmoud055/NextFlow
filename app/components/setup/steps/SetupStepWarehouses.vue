@@ -10,7 +10,7 @@
       {{ listError(errors, 'warehouses')[0] }}
     </v-alert>
 
-    <v-expansion-panels v-model="openPanel" multiple class="mb-4">
+    <v-expansion-panels v-model="openPanel" class="mb-4">
       <v-expansion-panel
         v-for="(warehouse, index) in form.warehouses"
         :key="index"
@@ -98,7 +98,7 @@ const { locale, t } = useAppLocale();
 const { fetchApi } = useApi();
 
 const errors = ref({});
-const openPanel = ref([0]);
+const openPanel = ref(0);
 const warehouseTypes = computed(() =>
   SETUP_WAREHOUSE_TYPES.map((type) => ({
     value: type,
@@ -134,12 +134,12 @@ function panelTitle(index, warehouse) {
 function applyDraft(draft) {
   if (Array.isArray(draft?.warehouses) && draft.warehouses.length) {
     form.warehouses = draft.warehouses.map((warehouse) => ({ ...warehouse }));
-    openPanel.value = form.warehouses.map((_, index) => index);
+    openPanel.value = 0;
     return;
   }
 
   form.warehouses = [createWarehouse(0)];
-  openPanel.value = [0];
+  openPanel.value = 0;
 }
 
 watch(() => props.draft, applyDraft, { immediate: true });
@@ -165,12 +165,16 @@ onMounted(loadOptions);
 
 function addWarehouse() {
   form.warehouses.push(createWarehouse(form.warehouses.length));
-  openPanel.value = [...openPanel.value, form.warehouses.length - 1];
+  openPanel.value = form.warehouses.length - 1;
 }
 
 function removeWarehouse(index) {
   form.warehouses.splice(index, 1);
-  openPanel.value = form.warehouses.map((_, itemIndex) => itemIndex);
+  if (openPanel.value === index) {
+    openPanel.value = Math.max(0, index - 1);
+  } else if (openPanel.value > index) {
+    openPanel.value--;
+  }
 }
 
 function submit() {

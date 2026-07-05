@@ -10,7 +10,7 @@
       {{ listError(errors, 'users')[0] }}
     </v-alert>
 
-    <v-expansion-panels v-model="openPanel" multiple class="mb-4">
+    <v-expansion-panels v-model="openPanel" class="mb-4">
       <v-expansion-panel
         v-for="(user, index) in form.users"
         :key="index"
@@ -102,7 +102,7 @@ const auth = useAuthStore();
 const { fetchApi } = useApi();
 
 const errors = ref({});
-const openPanel = ref([0]);
+const openPanel = ref(0);
 const roles = ref([]);
 const rolesLoading = ref(false);
 const showPassword = ref({});
@@ -151,12 +151,12 @@ function applyDraft(draft) {
       ...user,
       roles: Array.isArray(user.roles) ? [...user.roles] : [],
     }));
-    openPanel.value = form.users.map((_, index) => index);
+    openPanel.value = 0;
     return;
   }
 
   form.users = [createUser()];
-  openPanel.value = [0];
+  openPanel.value = 0;
 }
 
 watch(() => props.draft, applyDraft, { immediate: true });
@@ -176,12 +176,16 @@ function togglePassword(index) {
 
 function addUser() {
   form.users.push(createUser());
-  openPanel.value = [...openPanel.value, form.users.length - 1];
+  openPanel.value = form.users.length - 1;
 }
 
 function removeUser(index) {
   form.users.splice(index, 1);
-  openPanel.value = form.users.map((_, itemIndex) => itemIndex);
+  if (openPanel.value === index) {
+    openPanel.value = Math.max(0, index - 1);
+  } else if (openPanel.value > index) {
+    openPanel.value--;
+  }
 }
 
 function submit() {

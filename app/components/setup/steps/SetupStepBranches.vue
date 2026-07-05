@@ -10,7 +10,7 @@
       {{ listError(errors, 'branches')[0] }}
     </v-alert>
 
-    <v-expansion-panels v-model="openPanel" multiple class="m-4">
+    <v-expansion-panels v-model="openPanel" class="m-4">
       <v-expansion-panel
         v-for="(branch, index) in form.branches"
         :key="index"
@@ -85,7 +85,7 @@ const emit = defineEmits(["save"]);
 const { t } = useAppLocale();
 
 const errors = ref({});
-const openPanel = ref([0]);
+const openPanel = ref(0);
 
 const branchTypeOptions = computed(() =>
   SETUP_BRANCH_TYPES.map((value) => ({
@@ -109,24 +109,28 @@ function panelTitle(index, branch) {
 function applyDraft(draft) {
   if (Array.isArray(draft?.branches) && draft.branches.length) {
     form.branches = draft.branches.map((branch) => ({ ...branch }));
-    openPanel.value = form.branches.map((_, index) => index);
+    openPanel.value = 0;
     return;
   }
 
   form.branches = [createBranch(0)];
-  openPanel.value = [0];
+  openPanel.value = 0;
 }
 
 watch(() => props.draft, applyDraft, { immediate: true });
 
 function addBranch() {
   form.branches.push(createBranch(form.branches.length));
-  openPanel.value = [...openPanel.value, form.branches.length - 1];
+  openPanel.value = form.branches.length - 1;
 }
 
 function removeBranch(index) {
   form.branches.splice(index, 1);
-  openPanel.value = form.branches.map((_, itemIndex) => itemIndex);
+  if (openPanel.value === index) {
+    openPanel.value = Math.max(0, index - 1);
+  } else if (openPanel.value > index) {
+    openPanel.value--;
+  }
 }
 
 function submit() {
