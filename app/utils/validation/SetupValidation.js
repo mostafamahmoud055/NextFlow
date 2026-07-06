@@ -478,20 +478,20 @@ export function validateSetupStep(step, data, t) {
   switch (step) {
     case "company":
       return validateCompanyForm(data, t);
-    case "branches":
-      return validateBranchesForm(data.branches, t);
+    // case "branches":
+    //   return validateBranchesForm(data.branches, t);
     case "fiscal_year":
       return validateFiscalYearForm(data, t);
-    case "currency":
-      return validateCurrencyForm(data, t);
-    case "taxes":
-      return validateTaxesForm(data.taxes, t);
-    case "users":
-      return validateUsersForm(data.users, t);
-    case "permissions":
-      return validatePermissionsForm(data.assignments, t);
-    case "warehouses":
-      return validateWarehousesForm(data.warehouses, t);
+    // case "currency":
+    //   return validateCurrencyForm(data, t);
+    // case "taxes":
+    //   return validateTaxesForm(data.taxes, t);
+    // case "users":
+    //   return validateUsersForm(data.users, t);
+    // case "permissions":
+    //   return validatePermissionsForm(data.assignments, t);
+    // case "warehouses":
+    //   return validateWarehousesForm(data.warehouses, t);
     default:
       return {};
   }

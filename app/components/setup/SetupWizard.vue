@@ -94,12 +94,12 @@
           @save="saveCurrentStep"
         />
 
-        <SetupStepBranches
+        <!-- <SetupStepBranches
           v-else-if="currentStep === 'branches'"
           :draft="drafts.branches"
           :saving="setup.saving"
           @save="saveCurrentStep"
-        />
+        /> -->
 
         <SetupStepFiscalYear
           v-else-if="currentStep === 'fiscal_year'"
@@ -108,7 +108,7 @@
           @save="saveCurrentStep"
         />
 
-        <SetupStepCurrency
+        <!-- <SetupStepCurrency
           v-else-if="currentStep === 'currency'"
           :draft="drafts.currency"
           :saving="setup.saving"
@@ -148,7 +148,7 @@
           :draft="drafts.warehouses"
           :saving="setup.saving"
           @save="saveCurrentStep"
-        />
+        /> -->
 
         <SetupStepFinish
           v-else-if="currentStep === 'finish'"
@@ -163,14 +163,14 @@
 <script setup>
 import { nextTick } from "vue";
 import SetupStepCompany from "./steps/SetupStepCompany.vue";
-import SetupStepBranches from "./steps/SetupStepBranches.vue";
+// import SetupStepBranches from "./steps/SetupStepBranches.vue";
 import SetupStepFiscalYear from "./steps/SetupStepFiscalYear.vue";
-import SetupStepCurrency from "./steps/SetupStepCurrency.vue";
-import SetupStepTaxes from "./steps/SetupStepTaxes.vue";
-import SetupStepUsers from "./steps/SetupStepUsers.vue";
-import SetupStepPermissions from "./steps/SetupStepPermissions.vue";
-import SetupStepUserAccessOverview from "./steps/SetupStepUserAccessOverview.vue";
-import SetupStepWarehouses from "./steps/SetupStepWarehouses.vue";
+// import SetupStepCurrency from "./steps/SetupStepCurrency.vue";
+// import SetupStepTaxes from "./steps/SetupStepTaxes.vue";
+// import SetupStepUsers from "./steps/SetupStepUsers.vue";
+// import SetupStepPermissions from "./steps/SetupStepPermissions.vue";
+// import SetupStepUserAccessOverview from "./steps/SetupStepUserAccessOverview.vue";
+// import SetupStepWarehouses from "./steps/SetupStepWarehouses.vue";
 import SetupStepFinish from "./steps/SetupStepFinish.vue";
 import { SETUP_STEPS, previousStep, stepIndex } from "@/utils/setupSteps";
 import {
@@ -184,7 +184,7 @@ const setup = useSetupStore();
 const { fetchApi } = useApi();
 
 const loadError = ref("");
-const overviewLoading = ref(false);
+// const overviewLoading = ref(false);
 const companyLoading = ref(false);
 const installingSubmit = ref(false);
 const displayStep = ref(null);
@@ -239,12 +239,10 @@ async function loadWizard() {
 }
 
 async function loadStepData(step) {
-  if (step === "user_access_overview") {
-    await loadOverview();
-    return;
-  }
-
-
+  // if (step === "user_access_overview") {
+  //   await loadOverview();
+  //   return;
+  // }
 
   if (step === "company" && !setup.company) {
     await loadCompanyStep();
@@ -260,11 +258,11 @@ async function loadCompanyStep() {
   }
 }
 
-async function loadOverview() {
-  overviewLoading.value = true;
-  await setup.fetchUserAccessOverview();
-  overviewLoading.value = false;
-}
+// async function loadOverview() {
+//   overviewLoading.value = true;
+//   await setup.fetchUserAccessOverview();
+//   overviewLoading.value = false;
+// }
 
 async function saveCurrentStep(payload) {
   const step = currentStep.value;
@@ -274,14 +272,14 @@ async function saveCurrentStep(payload) {
 
   displayStep.value = null;
 
-  if (setup.currentStep === "user_access_overview") {
-    await loadOverview();
-  }
+  // if (setup.currentStep === "user_access_overview") {
+  //   await loadOverview();
+  // }
 }
 
-function goToWarehouses() {
-  displayStep.value = "warehouses";
-}
+// function goToWarehouses() {
+//   displayStep.value = "warehouses";
+// }
 
 function goBack() {
   const prev = previousStep(currentStep.value);
@@ -290,9 +288,9 @@ function goBack() {
 
   displayStep.value = prev;
 
-  if (prev === "user_access_overview" && !setup.overview) {
-    loadOverview();
-  }
+  // if (prev === "user_access_overview" && !setup.overview) {
+  //   loadOverview();
+  // }
 }
 
 async function handleFinish() {

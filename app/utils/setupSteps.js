@@ -1,26 +1,26 @@
-/** Mirrors backend SetupStep::ordered() — backend is source of truth. */
+/** Mirrors backend SetupStep::order() — backend is source of truth. */
 export const SETUP_STEPS = [
   "company",
-  "branches",
+  // "branches",
   "fiscal_year",
-  "currency",
-  "taxes",
-  "users",
-  "permissions",
-  "user_access_overview",
-  "warehouses",
+  // "currency",
+  // "taxes",
+  // "users",
+  // "permissions",
+  // "user_access_overview",
+  // "warehouses",
   "finish",
 ];
 
 export const SETUP_STEP_ENDPOINTS = {
   company: "/setup/company",
-  branches: "/setup/branches",
+  // branches: "/setup/branches",
   fiscal_year: "/setup/fiscal-year",
-  currency: "/setup/currency",
-  taxes: "/setup/taxes",
-  users: "/setup/users",
-  permissions: "/setup/permissions",
-  warehouses: "/setup/warehouses",
+  // currency: "/setup/currency",
+  // taxes: "/setup/taxes",
+  // users: "/setup/users",
+  // permissions: "/setup/permissions",
+  // warehouses: "/setup/warehouses",
 };
 
 /** HTTP method per step — company is update-only after onboarding. */
@@ -45,5 +45,5 @@ export function nextStep(step) {
 }
 
 export function isStoredStep(step) {
-  return step !== "user_access_overview" && step !== "finish";
+  return step !== "finish";
 }
