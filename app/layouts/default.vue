@@ -19,12 +19,23 @@
 
 
           <!-- Nav Items -->
-          <v-list density="compact" nav class="px-3 sidebar-list">
-            <template v-for="item in navItems" :key="item.titleKey">
+          <v-list
+            v-model:opened="openedGroups"
+            open-strategy="single"
+            density="compact"
+            nav
+            class="px-3 sidebar-list"
+          >
+            <template v-for="(item, index) in navigationItems" :key="item.titleKey || `divider-${index}`">
+
+              <v-divider
+                v-if="item.type === 'divider'"
+                class="sidebar-divider my-3"
+              />
 
               <!-- Rail Mode -->
               <v-menu
-                v-if="isRail"
+                v-else-if="isRail"
                 open-on-hover
                 location="end top"
                 offset="16"
@@ -139,11 +150,13 @@
 </template>
 
 <script setup>
+import { navigationItems } from "@/config/navigation";
 
 const { t } = useAppLocale()
 const route = useRoute()
 
 const isRail = useState('sidebar-rail', () => true)
+const openedGroups = ref([])
 
 function expandDrawer() {
   if (isRail.value) {
@@ -169,65 +182,6 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', onDocumentClick)
 })
-
-const navItems = [
-  { titleKey: 'navigation.dashboard', icon: 'mdi-home-variant', to: '/' },
-  {
-    titleKey: 'navigation.sales', icon: 'mdi-receipt',
-    children: [
-      { titleKey: 'navigation.manageInvoices', to: '/sales/invoices' },
-      { titleKey: 'navigation.createInvoice', to: '/sales/create' },
-      { titleKey: 'navigation.manageEstimates', to: '/sales/estimates' },
-      { titleKey: 'navigation.createEstimate', to: '/sales/create-estimate' },
-      { titleKey: 'navigation.creditNotes', to: '/sales/credit-notes' },
-      { titleKey: 'navigation.refundReceipts', to: '/sales/refunds' },
-      { titleKey: 'navigation.recurringInvoices', to: '/sales/recurring' },
-      { titleKey: 'navigation.clientPayments', to: '/sales/payments' },
-      { titleKey: 'navigation.salesSettings', to: '/sales/settings' },
-    ]
-  },
-  {
-    titleKey: 'navigation.clients', icon: 'mdi-account-tie',
-    children: [
-      { titleKey: 'navigation.users', to: '/clients/users' }
-    ]
-  },
-  {
-    titleKey: 'navigation.inventory', icon: 'mdi-package-variant-closed',
-    children: [
-      { titleKey: 'navigation.products', to: '/inventory/products' }
-    ]
-  },
-  {
-    titleKey: 'navigation.purchases', icon: 'mdi-truck-outline',
-    children: [
-      { titleKey: 'navigation.purchaseInvoices', to: '/purchases/invoices' },
-      { titleKey: 'navigation.purchaseRefunds', to: '/purchases/refunds' },
-      { titleKey: 'navigation.debitNotes', to: '/purchases/debit-notes' },
-      { titleKey: 'navigation.manageSuppliers', to: '/purchases/suppliers' },
-      { titleKey: 'navigation.suppliersPayments', to: '/purchases/payments' },
-      { titleKey: 'navigation.purchaseSettings', to: '/purchases/settings' },
-    ]
-  },
-  {
-    titleKey: 'navigation.finance', icon: 'mdi-safe',
-    children: [
-      { titleKey: 'navigation.reports', to: '/finance/reports' }
-    ]
-  },
-  {
-    titleKey: 'navigation.accounting', icon: 'mdi-cash-multiple',
-    children: [
-      { titleKey: 'navigation.ledger', to: '/accounting/ledger' }
-    ]
-  },
-  {
-    titleKey: 'navigation.employees', icon: 'mdi-account-group',
-    children: [
-      { titleKey: 'navigation.staff', to: '/employees/staff' }
-    ]
-  },
-]
 
 function isActive(item) {
   if (item.to) {
@@ -286,6 +240,10 @@ function isActive(item) {
   display: none;
   width: 0;
   height: 0;
+}
+
+.sidebar-divider {
+  opacity: 0.12;
 }
 
 .v-theme--dark .floating-sidebar {

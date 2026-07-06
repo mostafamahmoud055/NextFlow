@@ -96,7 +96,7 @@ import {
 
 definePageMeta({
   layout: "blank",
-  middleware: ["auth", "verified"],
+  middleware: ["auth"],
   pageTransition: {
     name: "auth-slide",
     mode: "out-in",

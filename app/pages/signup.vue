@@ -87,7 +87,7 @@ definePageMeta({
   // middleware: () => {
   //   return navigateTo("/signin");
   // },
-  middleware: ["auth", "verified","setup"],
+  middleware: ["auth"],
   pageTransition: {
     name: "auth-slide",
     mode: "out-in",

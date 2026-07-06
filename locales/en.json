@@ -71,7 +71,36 @@
     "goals": "Goals",
     "messages": "Messages",
     "tasks": "Tasks",
-    "settings": "Settings"
+    "settings": "Settings",
+    "products": "Products",
+    "reports": "Reports",
+    "ledger": "Ledger",
+    "staff": "Staff",
+    "companySettings": "Company Settings",
+    "companyManagement": "Company Management",
+    "branchManagement": "Branch Management",
+    "departmentsManagement": "Departments Management",
+    "warehousesManagement": "Warehouses Management",
+    "financialSetup": "Financial Setup",
+    "fiscalYearsManagement": "Fiscal Years Management",
+    "accountingPeriodsManagement": "Accounting Periods Management",
+    "currencyManagement": "Currency Management",
+    "exchangeRatesManagement": "Exchange Rates Management",
+    "taxManagement": "Tax Management",
+    "paymentTerms": "Payment Terms",
+    "costCentersManagement": "Cost Centers Management",
+    "profitCentersManagement": "Profit Centers Management",
+    "documentNumbering": "Document Numbering",
+    "accessControl": "Access Control",
+    "userManagement": "User Management",
+    "rolesManagement": "Roles Management",
+    "permissionsManagement": "Permissions Management",
+    "approvalRulesManagement": "Approval Rules Management",
+    "systemSettings": "System Settings",
+    "emailSettings": "Email Settings",
+    "smsSettings": "SMS Settings",
+    "systemPreferences": "System Preferences",
+    "auditLog": "Audit Log"
   },
   "dashboard": {
     "dashboard": "Dashboard",
@@ -130,94 +159,6 @@
     "confirmPassword": {
       "required": "Please confirm your password",
       "mismatch": "Passwords do not match"
-    },
-    "setup": {
-      "companyCode": {
-        "required": "Company code is required"
-      },
-      "nameEn": {
-        "required": "Name (English) is required"
-      },
-      "nameAr": {
-        "required": "Name (Arabic) is required"
-      },
-      "email": {
-        "invalid": "Email must be valid"
-      },
-      "branchCode": {
-        "required": "Branch code is required"
-      },
-      "branchType": {
-        "required": "Branch type is required",
-        "invalid": "Invalid branch type"
-      },
-      "fiscalYearName": {
-        "required": "Fiscal year name is required"
-      },
-      "startDate": {
-        "required": "Start date is required",
-        "invalid": "Start date must be valid"
-      },
-      "endDate": {
-        "required": "End date is required",
-        "invalid": "End date must be valid",
-        "afterStart": "End date must be on or after start date"
-      },
-      "currency": {
-        "required": "Base currency is required",
-        "invalid": "Invalid currency"
-      },
-      "timezone": {
-        "required": "Timezone is required",
-        "invalid": "Invalid timezone"
-      },
-      "taxRate": {
-        "required": "Tax rate is required",
-        "range": "Tax rate must be between 0 and 100"
-      },
-      "effectiveDate": {
-        "required": "Effective date is required",
-        "invalid": "Effective date must be valid"
-      },
-      "roleId": {
-        "required": "Role ID is required",
-        "invalid": "Role ID must be a positive number"
-      },
-      "roleIds": {
-        "required": "At least one role ID is required"
-      },
-      "roles": {
-        "required": "At least one role is required"
-      },
-      "roleName": {
-        "required": "Role name is required"
-      },
-      "permissions": {
-        "required": "At least one permission is required"
-      },
-      "warehouseCode": {
-        "required": "Warehouse code is required"
-      },
-      "warehouseName": {
-        "required": "Warehouse name is required"
-      },
-      "branchId": {
-        "required": "Branch ID is required",
-        "invalid": "Branch ID must be a positive number"
-      },
-      "warehouseType": {
-        "required": "Warehouse type is required",
-        "invalid": "Invalid warehouse type"
-      },
-      "minOneItem": {
-        "required": "At least one entry is required"
-      },
-      "duplicateCode": {
-        "required": "This code is already used in this form"
-      },
-      "duplicateEmail": {
-        "required": "This email is already used in this form"
-      }
     }
   },
   "locale": {
@@ -236,89 +177,5 @@
     "selectSubtitle": "Choose the company you want to work in",
     "switch": "Switch company",
     "noCompanies": "No companies are available for your account yet."
-  },
-  "setup": {
-    "title": "Workspace setup",
-    "subtitle": "Complete the steps below to activate your ERP workspace.",
-    "installTitle": "Create your company",
-    "installSubtitle": "Start by creating your first company and tenant workspace.",
-    "loadingPreparingTitle": "Preparing your workspace",
-    "loadingPreparingSubtitle": "Loading setup progress and configuration. This will only take a moment.",
-    "loadingCreatingTitle": "Creating your company",
-    "loadingCreatingSubtitle": "Setting up your tenant workspace. Please wait…",
-    "createCompany": "Create company",
-    "saveContinue": "Save and continue",
-    "back": "Back",
-    "backTo": "Back to {step}",
-    "revisitHint": "Saving this step will reset progress on later steps. You will need to complete them again.",
-    "addMore": "Add more",
-    "remove": "Remove",
-    "branchNumber": "Branch #{n}",
-    "branchNumberNamed": "Branch #{n} — {name}",
-    "taxNumber": "Tax #{n}",
-    "taxNumberNamed": "Tax #{n} — {name}",
-    "userNumber": "User #{n}",
-    "userNumberNamed": "User #{n} — {name}",
-    "permissionNumber": "Permission set #{n}",
-    "permissionNumberNamed": "Permission set #{n} — {name}",
-    "warehouseNumber": "Warehouse #{n}",
-    "warehouseNumberNamed": "Warehouse #{n} — {name}",
-    "continueToWarehouses": "Continue to warehouses",
-    "goLive": "Finish and go live",
-    "finishMessage": "All required steps are complete. Finish setup to access the dashboard.",
-    "missingTenant": "No tenant is selected. Refresh or contact support.",
-    "companyCode": "Company code",
-    "nameEn": "Name (English)",
-    "nameAr": "Name (Arabic)",
-    "commercialName": "Commercial name",
-    "phone": "Phone",
-    "country": "Country",
-    "city": "City",
-    "companyConfigureHint": "Review your company details below. You can update them now or continue and edit later in settings.",
-    "branchCode": "Branch code",
-    "branchType": "Branch type",
-    "branchTypes": {
-      "main": "Main",
-      "branch": "Branch"
-    },
-    "fiscalYearCode": "Fiscal year code",
-    "fiscalYearName": "Fiscal year name",
-    "startDate": "Start date",
-    "endDate": "End date",
-    "currency": "Base currency",
-    "timezone": "Timezone",
-    "taxRate": "Tax rate (%)",
-    "effectiveDate": "Effective date",
-    "roleIds": "Role IDs (comma-separated)",
-    "roleIdsHint": "Use existing role IDs from your RBAC seed.",
-    "roles": "Roles",
-    "roleName": "Role name",
-    "addRole": "Add role",
-    "roleId": "Role ID",
-    "permissions": "Permissions (comma-separated)",
-    "permissionsHint": "Permission names or IDs, e.g. roles.view",
-    "userAccessHierarchy": "Roles hierarchy",
-    "warehouseCode": "Warehouse code",
-    "warehouseName": "Warehouse name",
-    "branchName": "Branch name",
-    "warehouseType": "Warehouse type",
-    "warehouseTypes": {
-      "main": "Main warehouse",
-      "sub": "Sub-warehouse"
-    },
-    "noRoles": "No roles assigned",
-    "noUsersOverview": "No users with roles were found for this company.",
-    "steps": {
-      "company": "Company",
-      "branches": "Branches",
-      "fiscal_year": "Fiscal year",
-      "currency": "Currency",
-      "taxes": "Taxes",
-      "users": "Users",
-      "permissions": "Permissions",
-      "user_access_overview": "User access",
-      "warehouses": "Warehouses",
-      "finish": "Finish"
-    }
   }
 }

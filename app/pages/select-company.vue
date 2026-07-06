@@ -5,7 +5,7 @@
       :subtitle="t('tenant.selectSubtitle')"
     />
 
-    <div v-if="loading" class="d-flex justify-center py-8">
+    <div v-if="!auth.initialized" class="d-flex justify-center py-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
 
@@ -20,7 +20,7 @@
       >
         <template #prepend>
           <v-avatar size="40" color="surface-bright" class="me-2">
-            <v-img v-if="company.logo" :src="company.logo" cover />
+            <v-img v-if="company.logo_url" :src="company.logo_url" cover />
             <v-icon v-else size="22">mdi-office-building-outline</v-icon>
           </v-avatar>
         </template>
@@ -44,34 +44,24 @@
 <script setup>
 definePageMeta({
   layout: "blank",
-  middleware: ["auth", "verified"],
+  middleware: ["auth"],
 });
 
 const { t } = useAppLocale();
 const auth = useAuthStore();
 
-const { fetchApi } = useApi();
-
-const companies = ref([]);
-const loading = ref(true);
-
-async function loadCompanies() {
-  loading.value = true;
-
-  const result = await fetchApi("/companies", { silent: true });
-
-  const payload = result.data?.data ?? result.data ?? {};
-  companies.value = payload.items ?? (Array.isArray(payload) ? payload : []);
-
-  loading.value = false;
-}
+const companies = computed(() => auth.companies);
 
 async function handleSelect(company) {
-  await auth.setTenant(company);
-  await auth.fetchUser();
+  auth.setTenant(company);
+  await navigateTo("/");
 }
 
-onMounted(loadCompanies);
+onMounted(async () => {
+  if (!auth.initialized) {
+    await auth.initAuth();
+  }
+});
 </script>
 
 <style scoped>
