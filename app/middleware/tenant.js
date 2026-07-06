@@ -12,7 +12,7 @@ export default defineNuxtRouteMiddleware(async () => {
     return navigateTo("/setup");
   }
 
-  if (!tenant.setupCompleted) {
+  if (!tenant?.setupCompleted) {
     return navigateTo("/setup");
   }
 });

@@ -1,6 +1,21 @@
 <template>
   <div>
-    <section v-if="!auth.hasTenant" class="install-panel">
+    <div v-if="isPageLoading" class="setup-loading">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="48"
+        width="3"
+      />
+      <p class="setup-loading__title text-body-1 font-weight-medium mt-6 mb-1">
+        {{ loadingTitle }}
+      </p>
+      <p class="setup-loading__subtitle text-body-2 text-medium-emphasis mb-0">
+        {{ loadingSubtitle }}
+      </p>
+    </div>
+
+    <section v-else-if="!auth.hasTenant" class="install-panel">
       <AuthHeader
         :title="t('setup.installTitle')"
         :subtitle="t('setup.installSubtitle')"
@@ -33,6 +48,8 @@
         </v-btn>
       </v-form>
     </section>
+
+
 
     <section v-else class="setup-wizard">
       <div class="setup-wizard__header d-flex align-center justify-space-between flex-wrap ga-2 mb-4">
@@ -161,7 +178,6 @@
 </template>
 
 <script setup>
-import { nextTick } from "vue";
 import SetupStepCompany from "./steps/SetupStepCompany.vue";
 // import SetupStepBranches from "./steps/SetupStepBranches.vue";
 import SetupStepFiscalYear from "./steps/SetupStepFiscalYear.vue";
@@ -187,6 +203,7 @@ const loadError = ref("");
 // const overviewLoading = ref(false);
 const companyLoading = ref(false);
 const installingSubmit = ref(false);
+const wizardBootstrapping = ref(true);
 const displayStep = ref(null);
 const installErrors = ref({});
 
@@ -210,6 +227,20 @@ const progress = computed(() => {
   return Math.round(((index + 1) / SETUP_STEPS.length) * 100);
 });
 
+const isPageLoading = computed(() => installingSubmit.value || wizardBootstrapping.value);
+
+const loadingTitle = computed(() => (
+  installingSubmit.value
+    ? t("setup.loadingCreatingTitle")
+    : t("setup.loadingPreparingTitle")
+));
+
+const loadingSubtitle = computed(() => (
+  installingSubmit.value
+    ? t("setup.loadingCreatingSubtitle")
+    : t("setup.loadingPreparingSubtitle")
+));
+
 function stepLabel(step) {
   return t(`setup.steps.${step}`, step);
 }
@@ -217,10 +248,12 @@ function stepLabel(step) {
 async function loadWizard() {
   const tenantId = auth.tenantId;
 
-  if (!tenantId) return;
-
+  if (!tenantId) {
+    wizardBootstrapping.value = false;   // مفيش tenant، يبقى المفروض تظهر فورم الإنشاء
+    return;
+  }
   loadError.value = "";
-
+try {
   const result = await setup.ensureState();
 
   if (result?.error) {
@@ -236,6 +269,9 @@ async function loadWizard() {
   }
 
   await loadStepData(currentStep.value);
+} finally {
+  wizardBootstrapping.value = false;
+}
 }
 
 async function loadStepData(step) {
@@ -307,28 +343,32 @@ async function handleInstall() {
   if (hasErrors(installErrors.value)) return;
 
   installingSubmit.value = true;
+  wizardBootstrapping.value = true;
 
-  const result = await fetchApi("/onboarding/company", {
-    method: "POST",
-    body: installForm,
-  });
+  try {
+    const result = await fetchApi("/onboarding/company", {
+      method: "POST",
+      body: installForm,
+    });
 
-  installingSubmit.value = false;
+    if (result.error) {
+      wizardBootstrapping.value = false;   // ✅ لو فشل، رجّعها false عشان تشوف الفورم تاني مع رسالة الخطأ
+      return;
+    }
 
-  if (result.error) return;
+    const payload = result.data?.data ?? result.data ?? {};
+    const company = payload.company;
 
-  const payload = result.data?.data ?? result.data ?? {};
-  const company = payload.company;
+    if (!company?.uuid) return;
 
-  if (company?.uuid) {
     await auth.setTenant(company);
-    await auth.fetchContext();
     setup.setCompanyFromApi(company);
-    auth.patchContext({ setup_completed: false });
+    await setup.ensureState(true);
+    await loadStepData(setup.currentStep);
+  } finally {
+    installingSubmit.value = false;
+    wizardBootstrapping.value = false;
   }
-
-  await nextTick();
-  await loadWizard();
 }
 
 onMounted(loadWizard);
@@ -366,6 +406,21 @@ watch(currentStep, async (step, prev) => {
 .install-panel {
   max-width: 520px;
   margin: 0 auto;
+}
+
+.setup-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
+.setup-loading__title,
+.setup-loading__subtitle {
+  max-width: 360px;
 }
 
 @media (min-width: 769px) and (max-width: 1023px) {
