@@ -10,8 +10,8 @@
 
       <div class="d-flex align-center ga-2 navbar-actions">
         <v-btn
-          v-if="authStore.hasTenant"
-          to="/select-company"
+          v-if="authStore.hasCompanies"
+          :to="selectCompanyTo"
           variant="flat"
           color="surface"
           rounded="pill"
@@ -111,6 +111,7 @@
 <script setup>
 const { t } = useAppLocale()
 const authStore = useAuthStore()
+const route = useRoute()
 
 const searchQuery = ref('')
 const loggingOut = ref(false)
@@ -119,9 +120,20 @@ const profileLabel = computed(() => authStore.user?.name || t('dashboard.admin')
 const profileAvatar = computed(() => authStore.user?.avatar || 'https://i.pravatar.cc/150?img=32')
 const currentCompanyName = computed(() => authStore.tenant?.name || t('tenant.switch'))
 
-function handleProfile() {
-  // placeholder
-}
+const selectCompanyTo = computed(() => {
+  const current = route.fullPath
+
+  if (!current || current === '/select-company' || current.startsWith('/select-company?')) {
+    return '/select-company'
+  }
+
+  return {
+    path: '/select-company',
+    query: { redirect: current },
+  }
+})
+
+
 
 async function handleLogout() {
   if (loggingOut.value) return
@@ -230,7 +242,7 @@ async function handleLogout() {
 
 .company-switch {
   flex: none;
-  max-width: 200px;
+  /* max-width: 200px; */
   padding-inline: 12px !important;
 }
 

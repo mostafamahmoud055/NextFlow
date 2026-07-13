@@ -179,6 +179,39 @@ export const useAuthStore = defineStore("auth", () => {
         tenantCookie.value = null;
     }
 
+    function upsertCompany(company) {
+        if (!user.value || !company?.uuid) return;
+
+        const list = [...(user.value.companies ?? [])];
+        const i = list.findIndex((c) => c.uuid === company.uuid);
+        const row = {
+            id: company.id,
+            uuid: company.uuid,
+            name_ar: company.name_ar,
+            name_en: company.name_en,
+            logo_url: company.logo_url ?? null,
+            status: company.status?.value ?? company.status ?? null,
+        };
+
+        if (i === -1) list.unshift(row);
+        else list[i] = { ...list[i], ...row };
+
+        user.value = { ...user.value, companies: list };
+        syncTenantCookie();
+    }
+
+    function removeCompany(uuid) {
+        if (!user.value || !uuid) return;
+
+        user.value = {
+            ...user.value,
+            companies: (user.value.companies ?? []).filter((c) => c.uuid !== uuid),
+        };
+
+        if (tenantCookie.value?.id === uuid) clearTenant();
+        else syncTenantCookie();
+    }
+
     function loginWithGoogle() {
         window.location.href = `${config.public.googleRedirectUri}`;
     }
@@ -202,6 +235,8 @@ export const useAuthStore = defineStore("auth", () => {
         logout,
         setTenant,
         clearTenant,
+        upsertCompany,
+        removeCompany,
         loginWithGoogle,
         sendEmailOtp,
         verifyEmailOtp,

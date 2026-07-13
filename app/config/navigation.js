@@ -87,7 +87,7 @@ export const navigationItems = [
     titleKey: "navigation.financialSetup",
     icon: "mdi-bank-outline",
     children: [
-      { titleKey: "navigation.fiscalYearsManagement", to: "/settings/financial/fiscal-years" },
+      { titleKey: "navigation.fiscalYearsManagement", to: "/settings/company/fiscal-years" },
       { titleKey: "navigation.accountingPeriodsManagement", to: "/settings/financial/accounting-periods" },
       { titleKey: "navigation.currencyManagement", to: "/settings/financial/currencies" },
       { titleKey: "navigation.exchangeRatesManagement", to: "/settings/financial/exchange-rates" },

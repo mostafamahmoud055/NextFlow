@@ -49,12 +49,25 @@ definePageMeta({
 
 const { t } = useAppLocale();
 const auth = useAuthStore();
+const route = useRoute();
 
 const companies = computed(() => auth.companies);
 
+function resolveRedirect() {
+  const redirect = route.query.redirect;
+
+  if (typeof redirect !== "string") return "/";
+  if (!redirect.startsWith("/") || redirect.startsWith("//")) return "/";
+  if (redirect === "/select-company" || redirect.startsWith("/select-company?")) {
+    return "/";
+  }
+
+  return redirect;
+}
+
 async function handleSelect(company) {
   auth.setTenant(company);
-  await navigateTo("/");
+  await navigateTo(resolveRedirect());
 }
 
 onMounted(async () => {
