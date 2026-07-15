@@ -384,7 +384,7 @@ function parentLabel(department) {
   if (department.parent) {
     return departmentDisplayName(department.parent, locale.value);
   }
-  if (!department.parent_id) return "—";
+  if (!department.parent_id) return "Main";
   const match = store.allItems.find((item) => item.id === department.parent_id);
   return match ? departmentDisplayName(match, locale.value) : "—";
 }
@@ -406,7 +406,11 @@ async function loadPage(nextPage = page.value, force = false) {
 }
 
 async function loadTree() {
-  await store.fetchTree(branchId.value || null);
+  await store.fetchTree({
+    search: search.value?.trim() || "",
+    status: status.value || null,
+    branch_id: branchId.value || null,
+  });
 }
 
 function applyFilters() {

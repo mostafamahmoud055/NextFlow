@@ -79,8 +79,6 @@
             <tr>
               <th>{{ t('company.company') }}</th>
               <th class="d-none d-md-table-cell">{{ t('company.code') }}</th>
-              <th class="d-none d-lg-table-cell">{{ t('company.baseCurrency') }}</th>
-              <th class="d-none d-lg-table-cell">{{ t('company.timezone') }}</th>
               <th>{{ t('company.status') }}</th>
               <th class="text-end">{{ t('company.actions') }}</th>
             </tr>
@@ -108,12 +106,6 @@
               </td>
               <td class="d-none d-md-table-cell">
                 <span class="text-medium-emphasis">{{ company.company_code || '—' }}</span>
-              </td>
-              <td class="d-none d-lg-table-cell">
-                <span class="text-medium-emphasis">{{ currencyLabel(company) }}</span>
-              </td>
-              <td class="d-none d-lg-table-cell">
-                <span class="text-medium-emphasis">{{ timezoneLabel(company) }}</span>
               </td>
               <td>
                 <v-chip
@@ -281,14 +273,6 @@ function isActive(company) {
 
 function statusLabel(company) {
   return isActive(company) ? t("company.statusActive") : t("company.statusInactive");
-}
-
-function currencyLabel(company) {
-  return enumValue(company.base_currency) || company.base_currency?.label || "—";
-}
-
-function timezoneLabel(company) {
-  return enumValue(company.timezone) || company.timezone?.label || "—";
 }
 
 async function loadPage(nextPage = page.value, force = false) {

@@ -25,6 +25,7 @@ export const useAuthStore = defineStore("auth", () => {
     const roles = computed(() => user.value?.roles ?? []);
     const permissions = computed(() => user.value?.permissions ?? []);
     const companies = computed(() => user.value?.companies ?? []);
+    const hasOneCompany = computed(() => companies.value.length === 1);
     const hasCompanies = computed(() => companies.value.length > 0);
     const tenantId = computed(() => tenantCookie.value?.id ?? null);
     const tenantName = computed(() => {
@@ -223,6 +224,7 @@ export const useAuthStore = defineStore("auth", () => {
         roles,
         permissions,
         companies,
+        hasOneCompany,
         hasCompanies,
         tenantId,
         tenantName,

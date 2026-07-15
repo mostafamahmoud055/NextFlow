@@ -96,18 +96,33 @@
             </v-col>
 
             <v-col cols="12" sm="6">
-              <v-text-field
+              <v-autocomplete
                 v-model="form.country"
+                :items="countryOptions"
+                item-title="label"
+                item-value="code"
                 :label="t('company.country')"
                 :error-messages="fieldErrors.country"
+                :rules="[requiredRule]"
+                variant="outlined"
+                clearable
                 hide-details="auto"
+                @update:model-value="onCountryChange"
               />
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field
+              <v-autocomplete
                 v-model="form.city"
+                :items="citySelectOptions"
+                item-title="label"
+                item-value="code"
                 :label="t('company.city')"
                 :error-messages="fieldErrors.city"
+                :disabled="!form.country"
+                :loading="citiesLoading"
+                :rules="[requiredRule]"
+                variant="outlined"
+                clearable
                 hide-details="auto"
               />
             </v-col>
@@ -125,33 +140,6 @@
                 v-model="form.postal_code"
                 :label="t('company.postalCode')"
                 :error-messages="fieldErrors.postal_code"
-                hide-details="auto"
-              />
-            </v-col>
-
-            <v-col cols="12" sm="6">
-              <v-select
-                v-model="form.base_currency"
-                :items="currencyItems"
-                item-title="title"
-                item-value="value"
-                :label="t('company.baseCurrency')"
-                :error-messages="fieldErrors.base_currency"
-                :rules="[requiredRule]"
-                variant="outlined"
-                hide-details="auto"
-              />
-            </v-col>
-            <v-col cols="12" sm="6">
-              <v-select
-                v-model="form.timezone"
-                :items="timezoneItems"
-                item-title="title"
-                item-value="value"
-                :label="t('company.timezone')"
-                :error-messages="fieldErrors.timezone"
-                :rules="[requiredRule]"
-                variant="outlined"
                 hide-details="auto"
               />
             </v-col>
@@ -205,12 +193,8 @@
 </template>
 
 <script setup>
-import {
-  COMPANY_CURRENCIES,
-  COMPANY_TIMEZONES,
-  companyToForm,
-  emptyCompanyForm,
-} from "~/utils/companyConstants";
+import { companyToForm, emptyCompanyForm } from "~/utils/companyConstants";
+import { getCountryByCode } from "@/data/geo";
 
 const props = defineProps({
   modelValue: {
@@ -230,27 +214,25 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 const { t, locale } = useAppLocale();
+const {
+  countryOptions,
+  cityOptions,
+  resolveCountryCode,
+  resolveCityCode,
+} = useGeo();
 
 const formRef = ref(null);
 const form = reactive(emptyCompanyForm());
 const logoFiles = ref([]);
 const fieldErrors = reactive({});
+const hydrating = ref(false);
 
 const isEdit = computed(() => Boolean(props.company?.uuid));
 
-const currencyItems = computed(() =>
-  COMPANY_CURRENCIES.map((item) => ({
-    value: item.value,
-    title: `${item.value} — ${locale.value === "ar" ? item.labelAr : item.labelEn}`,
-  })),
-);
-
-const timezoneItems = computed(() =>
-  COMPANY_TIMEZONES.map((item) => ({
-    value: item.value,
-    title: locale.value === "ar" ? item.labelAr : item.labelEn,
-  })),
-);
+const {
+  options: citySelectOptions,
+  loading: citiesLoading,
+} = cityOptions(toRef(form, "country"));
 
 const requiredRule = (value) => {
   if (value == null || String(value).trim() === "") {
@@ -274,10 +256,32 @@ function applyServerErrors(errors) {
   });
 }
 
-function hydrate() {
+function onCountryChange(code) {
+  if (hydrating.value) return;
+
+  form.city = "";
+
+  const country = getCountryByCode(code);
+  if (!country) return;
+
+}
+
+async function hydrate() {
+  hydrating.value = true;
   resetErrors();
   logoFiles.value = [];
-  Object.assign(form, props.company ? companyToForm(props.company) : emptyCompanyForm());
+
+  const next = props.company ? companyToForm(props.company) : emptyCompanyForm();
+  next.country = resolveCountryCode(next.country) || next.country || "";
+
+  Object.assign(form, next);
+
+  if (form.country && form.city) {
+    form.city = (await resolveCityCode(form.country, form.city)) || form.city;
+  }
+
+  await nextTick();
+  hydrating.value = false;
 }
 
 function close() {

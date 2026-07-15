@@ -99,11 +99,14 @@ export const useDepartmentsStore = defineStore("departments", () => {
     }
   }
 
-  async function fetchTree(branchId = null) {
+  async function fetchTree(forceFilters = null) {
     treeLoading.value = true;
     try {
+      const source = forceFilters || filters.value;
       const params = {};
-      if (branchId) params.branch_id = branchId;
+      if (source.search) params.search = source.search;
+      if (source.status) params.status = source.status;
+      if (source.branch_id) params.branch_id = source.branch_id;
 
       const result = await fetchApi("/departments/tree", { tenant: true, params });
       if (result.error) {

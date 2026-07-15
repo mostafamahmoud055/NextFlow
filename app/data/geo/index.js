@@ -1,54 +1,43 @@
-import { GEO_CITIES, GEO_COUNTRIES, GEO_STATES } from './data'
+import GEO_COUNTRIES from '../../assets/geo/countries.json'
+import GEO_CURRENCIES from '../../assets/geo/currencies.json'
+import GEO_TIMEZONES from '../../assets/geo/timezones.json'
 
-export { GEO_CITIES, GEO_COUNTRIES, GEO_STATES } from './data'
-export {
-  GEO_CURRENCIES,
-  GEO_TIMEZONES,
-  SETUP_CURRENCY_CODES,
-  SETUP_TIMEZONE_VALUES,
-} from './currencies'
+export { GEO_COUNTRIES, GEO_CURRENCIES, GEO_TIMEZONES }
+
+export const SETUP_CURRENCY_CODES = GEO_CURRENCIES.map((currency) => currency.code)
+export const SETUP_TIMEZONE_VALUES = GEO_TIMEZONES.map((timezone) => timezone.value)
+
+/** Vite code-split loaders — one chunk per country, fetched only when requested. */
+const cityLoaders = import.meta.glob('../../assets/geo/cities/*.json')
+
+const citiesCache = new Map()
+const citiesPending = new Map()
+
+function normalizeQuery(query) {
+  return query.trim().toLowerCase()
+}
+
+function matchesQuery(value, query) {
+  return value.toLowerCase().includes(query)
+}
+
+function cityLoaderKey(countryCode) {
+  const code = countryCode.toUpperCase()
+  return Object.keys(cityLoaders).find((key) =>
+    key.endsWith(`/cities/${code}.json`) || key.endsWith(`\\cities\\${code}.json`),
+  )
+}
 
 let indexes = null
 
 function buildIndexes() {
   const countriesByCode = new Map()
-  const statesByCountry = new Map()
-  const citiesByCountry = new Map()
-  const citiesByCountryState = new Map()
 
   for (const country of GEO_COUNTRIES) {
     countriesByCode.set(country.code, country)
-    statesByCountry.set(country.code, [])
-    citiesByCountry.set(country.code, [])
   }
 
-  for (const state of GEO_STATES) {
-    const list = statesByCountry.get(state.countryCode) ?? []
-    list.push(state)
-    statesByCountry.set(state.countryCode, list)
-  }
-
-  for (const city of GEO_CITIES) {
-    const countryList = citiesByCountry.get(city.countryCode) ?? []
-    countryList.push(city)
-    citiesByCountry.set(city.countryCode, countryList)
-
-    const stateKey = `${city.countryCode}:${city.stateCode}`
-    const stateList = citiesByCountryState.get(stateKey) ?? []
-    stateList.push(city)
-    citiesByCountryState.set(stateKey, stateList)
-  }
-
-  for (const list of citiesByCountry.values()) {
-    list.sort((a, b) => a.nameEn.localeCompare(b.nameEn))
-  }
-
-  return {
-    countriesByCode,
-    statesByCountry,
-    citiesByCountry,
-    citiesByCountryState,
-  }
+  return { countriesByCode }
 }
 
 function getIndexes() {
@@ -57,14 +46,6 @@ function getIndexes() {
   }
 
   return indexes
-}
-
-function normalizeQuery(query) {
-  return query.trim().toLowerCase()
-}
-
-function matchesQuery(value, query) {
-  return value.toLowerCase().includes(query)
 }
 
 export function getCountries() {
@@ -76,27 +57,70 @@ export function getCountryByCode(code) {
   return getIndexes().countriesByCode.get(code.toUpperCase())
 }
 
-export function getStates(countryCode) {
-  if (!countryCode) return []
-  return getIndexes().statesByCountry.get(countryCode.toUpperCase()) ?? []
+/** @deprecated States dataset removed — returns []. */
+export function getStates(_countryCode) {
+  return []
 }
 
-export function getCities(countryCode, stateCode) {
+/**
+ * Lazily load cities for a country (cached after first fetch).
+ * Does not pull other countries into the bundle.
+ */
+export async function loadCities(countryCode) {
   if (!countryCode) return []
 
   const code = countryCode.toUpperCase()
 
-  if (stateCode) {
-    return getIndexes().citiesByCountryState.get(`${code}:${stateCode}`) ?? []
+  if (citiesCache.has(code)) {
+    return citiesCache.get(code)
   }
 
-  return getIndexes().citiesByCountry.get(code) ?? []
+  if (citiesPending.has(code)) {
+    return citiesPending.get(code)
+  }
+
+  const key = cityLoaderKey(code)
+  const loader = key ? cityLoaders[key] : null
+
+  if (!loader) {
+    citiesCache.set(code, [])
+    return []
+  }
+
+  const promise = loader()
+    .then((mod) => {
+      const list = Array.isArray(mod) ? mod : (mod?.default ?? [])
+      citiesCache.set(code, list)
+      citiesPending.delete(code)
+      return list
+    })
+    .catch((error) => {
+      citiesPending.delete(code)
+      console.error(`[geo] failed to load cities for ${code}`, error)
+      citiesCache.set(code, [])
+      return []
+    })
+
+  citiesPending.set(code, promise)
+  return promise
 }
 
-export function getCityByCode(countryCode, cityCode) {
-  if (!countryCode || !cityCode) return undefined
+/** Sync access — only returns data already loaded via `loadCities`. */
+export function getCities(countryCode, _stateCode) {
+  if (!countryCode) return []
+  return citiesCache.get(countryCode.toUpperCase()) ?? []
+}
 
-  return getCities(countryCode).find((city) => city.code === cityCode)
+export async function getCityByCode(countryCode, cityCode) {
+  if (!countryCode || cityCode == null || cityCode === '') return undefined
+
+  const cities = await loadCities(countryCode)
+  const needle = String(cityCode)
+
+  return cities.find((city) =>
+    String(city.id) === needle
+    || city.code === needle,
+  )
 }
 
 export function searchCountries(query, limit = 50) {
@@ -115,19 +139,13 @@ export function searchCountries(query, limit = 50) {
     .slice(0, limit)
 }
 
-export function searchCities(query, options = {}) {
+export async function searchCities(query, options = {}) {
   const q = normalizeQuery(query)
-  const { countryCode, stateCode, limit = 50 } = options
+  const { countryCode, limit = 50 } = options
 
-  let pool
+  if (!countryCode) return []
 
-  if (countryCode && stateCode) {
-    pool = getCities(countryCode, stateCode)
-  } else if (countryCode) {
-    pool = getCities(countryCode)
-  } else {
-    pool = GEO_CITIES
-  }
+  const pool = await loadCities(countryCode)
 
   if (!q) {
     return pool.slice(0, limit)
@@ -135,14 +153,14 @@ export function searchCities(query, options = {}) {
 
   return pool
     .filter((city) =>
-      matchesQuery(city.code, q)
+      matchesQuery(String(city.id), q)
+      || (city.code && matchesQuery(city.code, q))
       || matchesQuery(city.nameEn, q)
       || city.nameAr.includes(query.trim()),
     )
     .slice(0, limit)
 }
 
-/** Resolve a stored country value (code or legacy name) to an ISO code. */
 export function resolveCountryCode(value) {
   if (!value) return ''
 
@@ -157,21 +175,21 @@ export function resolveCountryCode(value) {
   return match?.code ?? value
 }
 
-/** Resolve a stored city value (code or legacy name) within a country. */
-export function resolveCityCode(countryCode, value) {
+export async function resolveCityCode(countryCode, value) {
   if (!value || !countryCode) return ''
 
-  const cities = getCities(countryCode)
-  const byCode = cities.find((city) => city.code === value)
+  const cities = await loadCities(countryCode)
+  const needle = String(value)
 
-  if (byCode) return byCode.code
+  const byId = cities.find((city) => String(city.id) === needle || city.code === needle)
+  if (byId) return byId.code ?? String(byId.id)
 
   const match = cities.find((city) =>
-    city.nameEn.toLowerCase() === value.toLowerCase()
-    || city.nameAr === value,
+    city.nameEn.toLowerCase() === needle.toLowerCase()
+    || city.nameAr === needle,
   )
 
-  return match?.code ?? value
+  return match ? (match.code ?? String(match.id)) : value
 }
 
 export function getCountryLabel(code, locale = 'en') {
@@ -180,8 +198,14 @@ export function getCountryLabel(code, locale = 'en') {
   return locale === 'ar' ? country.nameAr : country.nameEn
 }
 
-export function getCityLabel(countryCode, cityCode, locale = 'en') {
-  const city = getCityByCode(countryCode, cityCode)
+export async function getCityLabel(countryCode, cityCode, locale = 'en') {
+  const city = await getCityByCode(countryCode, cityCode)
   if (!city) return cityCode
   return locale === 'ar' ? city.nameAr : city.nameEn
+}
+
+/** Drop cached city lists (useful in tests). */
+export function clearCitiesCache() {
+  citiesCache.clear()
+  citiesPending.clear()
 }

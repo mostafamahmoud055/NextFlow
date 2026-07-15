@@ -10,14 +10,26 @@
         </h1>
       </div>
 
-      <v-chip
-        v-if="store.baseCurrency"
-        color="primary"
-        variant="tonal"
-        prepend-icon="mdi-currency-usd"
-      >
-        {{ t('currency.currentBase') }}: {{ store.baseCurrency }}
-      </v-chip>
+      <div class="d-flex flex-wrap align-center ga-3">
+        <v-chip
+          v-if="store.baseCurrency"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-currency-usd"
+        >
+          {{ t('currency.currentBase') }}: {{ store.baseCurrency }}
+        </v-chip>
+
+        <v-btn
+          v-if="canAttach"
+          color="primary"
+          class="text-none"
+          prepend-icon="mdi-plus"
+          @click="openAttach"
+        >
+          {{ t('currency.attach') }}
+        </v-btn>
+      </div>
     </div>
 
     <v-card class="dashboard-card currency-toolbar mb-4" elevation="0">
@@ -47,7 +59,7 @@
     </v-card>
 
     <v-card class="dashboard-card" elevation="0">
-      <div v-if="store.loading && !store.loaded" class="d-flex justify-center py-12">
+      <div v-if="store.loading && !store.items.length" class="d-flex justify-center py-12">
         <v-progress-circular indeterminate color="primary" />
       </div>
 
@@ -65,29 +77,33 @@
             <tr>
               <th>{{ t('currency.code') }}</th>
               <th>{{ t('currency.name') }}</th>
-              <th class="d-none d-md-table-cell">{{ t('currency.country') }}</th>
+              <th class="d-none d-md-table-cell">{{ t('currency.symbol') }}</th>
               <th class="d-none d-lg-table-cell">{{ t('currency.decimalPlaces') }}</th>
+              <th class="d-none d-lg-table-cell">{{ t('currency.roundingMode') }}</th>
               <th>{{ t('currency.base') }}</th>
-              <th class="text-end">{{ t('currency.actions') }}</th>
+              <th v-if="canMutate" class="text-end">{{ t('currency.actions') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="currency in store.filteredItems" :key="currency.code">
+            <tr v-for="row in store.filteredItems" :key="row.id">
               <td>
                 <div class="font-weight-medium py-2">
-                  {{ currency.code }}
+                  {{ row.currency?.code }}
                 </div>
               </td>
-              <td>{{ currencyName(currency) }}</td>
+              <td>{{ currencyName(row) }}</td>
               <td class="d-none d-md-table-cell text-medium-emphasis">
-                {{ currency.country_code }}
+                {{ row.currency?.symbol }}
               </td>
               <td class="d-none d-lg-table-cell text-medium-emphasis">
-                {{ currency.decimal_places }}
+                {{ row.decimal_places }}
+              </td>
+              <td class="d-none d-lg-table-cell text-medium-emphasis">
+                {{ roundingLabel(row.rounding_mode) }}
               </td>
               <td>
                 <v-chip
-                  v-if="isBase(currency)"
+                  v-if="row.is_base"
                   size="small"
                   color="primary"
                   variant="tonal"
@@ -96,18 +112,45 @@
                 </v-chip>
                 <span v-else class="text-medium-emphasis">—</span>
               </td>
-              <td class="text-end">
-                <v-btn
-                  v-if="canUpdate && !isBase(currency)"
-                  variant="text"
-                  size="small"
-                  class="text-none"
-                  prepend-icon="mdi-star-outline"
-                  :disabled="actionLoading || store.saving"
-                  @click="confirmSetBase(currency)"
-                >
-                  {{ t('currency.setBase') }}
-                </v-btn>
+              <td v-if="canMutate" class="text-end">
+                <v-menu location="bottom end">
+                  <template #activator="{ props: menuProps }">
+                    <v-btn
+                      v-bind="menuProps"
+                      icon
+                      variant="text"
+                      size="small"
+                      :aria-label="t('currency.actions')"
+                    >
+                      <v-icon>mdi-dots-vertical</v-icon>
+                    </v-btn>
+                  </template>
+
+                  <v-list density="compact" min-width="200">
+                    <v-list-item
+                      v-if="canUpdate"
+                      prepend-icon="mdi-pencil-outline"
+                      :title="t('buttons.edit')"
+                      :disabled="actionLoading"
+                      @click="openEdit(row)"
+                    />
+                    <v-list-item
+                      v-if="canUpdate && !row.is_base"
+                      prepend-icon="mdi-star-outline"
+                      :title="t('currency.setBase')"
+                      :disabled="actionLoading || store.saving"
+                      @click="confirmSetBase(row)"
+                    />
+                    <v-list-item
+                      v-if="canDetach && !row.is_base"
+                      prepend-icon="mdi-delete-outline"
+                      :title="t('currency.detach')"
+                      class="text-error"
+                      :disabled="actionLoading || store.saving"
+                      @click="confirmDetach(row)"
+                    />
+                  </v-list>
+                </v-menu>
               </td>
             </tr>
           </tbody>
@@ -115,16 +158,24 @@
       </template>
     </v-card>
 
+    <CurrencyFormDialog
+      v-model="formOpen"
+      :currency="editingRow"
+      :attached-codes="attachedCodes"
+      :saving="store.saving"
+      @submit="handleFormSubmit"
+    />
+
     <v-dialog v-model="baseDialogOpen" max-width="480">
       <v-card>
-        <v-card-title class="text-h6  pt-6">
+        <v-card-title class="text-h6 pt-6">
           {{ t('currency.setBaseTitle') }}
         </v-card-title>
         <v-card-text>
           {{
             t('currency.setBaseConfirm', {
-              code: pendingCurrency?.code,
-              name: pendingCurrency ? currencyName(pendingCurrency) : '',
+              code: pendingRow?.currency?.code,
+              name: pendingRow ? currencyName(pendingRow) : '',
             })
           }}
         </v-card-text>
@@ -139,7 +190,8 @@
             {{ t('buttons.cancel') }}
           </v-btn>
           <v-btn
-            class="text-error"
+            color="primary"
+            class="text-none"
             :loading="actionLoading"
             @click="handleSetBase"
           >
@@ -148,10 +200,47 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="detachDialogOpen" max-width="480">
+      <v-card>
+        <v-card-title class="text-h6 pt-6">
+          {{ t('currency.detachTitle') }}
+        </v-card-title>
+        <v-card-text>
+          {{
+            t('currency.detachConfirm', {
+              code: pendingRow?.currency?.code,
+              name: pendingRow ? currencyName(pendingRow) : '',
+            })
+          }}
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="text"
+            class="text-none"
+            :disabled="actionLoading"
+            @click="detachDialogOpen = false"
+          >
+            {{ t('buttons.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            class="text-none"
+            :loading="actionLoading"
+            @click="handleDetach"
+          >
+            {{ t('currency.detach') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
+import CurrencyFormDialog from "~/components/currency/CurrencyFormDialog.vue";
+import { ROUNDING_MODES } from "~/utils/currencyConstants";
 import { useSnackbar } from "~/composables/useSnackbar";
 
 definePageMeta({
@@ -167,19 +256,33 @@ useHead({
   title: () => t("navigation.currencyManagement"),
 });
 
+const canView = computed(() => hasPermission("currencies.view"));
+const canAttach = computed(() => hasPermission("currencies.attach"));
+const canDetach = computed(() => hasPermission("currencies.detach"));
 const canUpdate = computed(() => hasPermission("currencies.update"));
+const canMutate = computed(() => canAttach.value || canDetach.value || canUpdate.value);
 
 const search = ref("");
 const actionLoading = ref(false);
+const formOpen = ref(false);
+const editingRow = ref(null);
 const baseDialogOpen = ref(false);
-const pendingCurrency = ref(null);
+const detachDialogOpen = ref(false);
+const pendingRow = ref(null);
 
-function currencyName(currency) {
+const attachedCodes = computed(() =>
+  store.allItems.map((row) => row.currency?.code).filter(Boolean),
+);
+
+function currencyName(row) {
+  const currency = row?.currency;
+  if (!currency) return "—";
   return locale.value === "ar" ? currency.name_ar : currency.name_en;
 }
 
-function isBase(currency) {
-  return store.baseCurrency === currency.code;
+function roundingLabel(mode) {
+  const match = ROUNDING_MODES.find((item) => item.value === mode);
+  return match ? t(match.labelKey) : mode || "—";
 }
 
 function applyFilters() {
@@ -191,21 +294,72 @@ function clearSearch() {
   applyFilters();
 }
 
-function confirmSetBase(currency) {
-  pendingCurrency.value = currency;
+async function openAttach() {
+  editingRow.value = null;
+  formOpen.value = true;
+}
+
+function openEdit(row) {
+  editingRow.value = row;
+  formOpen.value = true;
+}
+
+function confirmSetBase(row) {
+  pendingRow.value = row;
   baseDialogOpen.value = true;
 }
 
+function confirmDetach(row) {
+  pendingRow.value = row;
+  detachDialogOpen.value = true;
+}
+
+async function handleFormSubmit({ payload, applyServerErrors }) {
+  const result = editingRow.value
+    ? await store.update(editingRow.value.currency.code, payload)
+    : await store.attach(payload);
+
+  if (result.error) {
+    applyServerErrors(result.error.errors);
+    return;
+  }
+
+  showSnackbar(
+    editingRow.value ? t("currency.updated") : t("currency.attached"),
+    200,
+  );
+  formOpen.value = false;
+  editingRow.value = null;
+}
+
 async function handleSetBase() {
-  if (!pendingCurrency.value?.code) return;
+  const code = pendingRow.value?.currency?.code;
+  if (!code) return;
 
   actionLoading.value = true;
   try {
-    const result = await store.setBaseCurrency(pendingCurrency.value.code);
+    const result = await store.setBaseCurrency(code);
     if (!result.error) {
       showSnackbar(t("currency.baseSet"), 200);
       baseDialogOpen.value = false;
-      pendingCurrency.value = null;
+      pendingRow.value = null;
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+async function handleDetach() {
+  const code = pendingRow.value?.currency?.code;
+  if (!code) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.detach(code);
+    if (!result.error) {
+      showSnackbar(t("currency.detached"), 200);
+      detachDialogOpen.value = false;
+      pendingRow.value = null;
     }
   } finally {
     actionLoading.value = false;
@@ -214,7 +368,7 @@ async function handleSetBase() {
 
 onMounted(() => {
   search.value = store.filters.search || "";
-  store.fetchList();
+  if (canView.value) store.fetchList();
 });
 </script>
 
