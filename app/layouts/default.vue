@@ -26,7 +26,7 @@
             nav
             class="px-3 sidebar-list"
           >
-            <template v-for="(item, index) in navigationItems" :key="item.titleKey || `divider-${index}`">
+            <template v-for="(item, index) in visibleNavigationItems" :key="item.titleKey || `divider-${index}`">
 
               <v-divider
                 v-if="item.type === 'divider'"
@@ -153,10 +153,45 @@
 import { navigationItems } from "@/config/navigation";
 
 const { t } = useAppLocale()
+const { hasAnyPermission } = usePermissions()
 const route = useRoute()
 
 const isRail = useState('sidebar-rail', () => true)
 const openedGroups = ref([])
+
+function canAccess(item) {
+  if (!item?.permission) return true
+  const keys = Array.isArray(item.permission) ? item.permission : [item.permission]
+  return hasAnyPermission(...keys)
+}
+
+const visibleNavigationItems = computed(() => {
+  const items = []
+
+  for (const item of navigationItems) {
+    if (item.type === 'divider') {
+      items.push(item)
+      continue
+    }
+
+    if (item.children) {
+      const children = item.children.filter(canAccess)
+      if (!children.length) continue
+      items.push({ ...item, children })
+      continue
+    }
+
+    if (!canAccess(item)) continue
+    items.push(item)
+  }
+
+  return items.filter((item, index, list) => {
+    if (item.type !== 'divider') return true
+    const prev = list[index - 1]
+    const next = list[index + 1]
+    return prev && next && prev.type !== 'divider' && next.type !== 'divider'
+  })
+})
 
 function expandDrawer() {
   if (isRail.value) {

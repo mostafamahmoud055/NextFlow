@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { useApi } from "@/composables/useApi";
-import { useSnackbar } from "~/composables/useSnackbar";
 import { useCompaniesStore } from "@/stores/companies";
 
 function unwrap(payload) {
@@ -13,23 +12,12 @@ function asList(payload) {
   return data?.items?.data || data?.items || [];
 }
 
-function companyUuid() {
+function tenantUuid() {
   return useCookie("nf_tenant").value?.id ?? null;
 }
 
-function noCompanyError() {
-  const message = "No company selected";
-  const { showSnackbar } = useSnackbar();
-  showSnackbar(message, 400);
-  return {
-    message,
-    status: 400,
-    errors: { form: [message] },
-  };
-}
-
 export const useCurrenciesStore = defineStore("currencies", () => {
-  const { fetchApi } = useApi();
+  const { fetchApi, missingCompanyResult } = useApi();
   const companies = useCompaniesStore();
 
   const allItems = ref([]);
@@ -82,13 +70,13 @@ export const useCurrenciesStore = defineStore("currencies", () => {
   }
 
   async function fetchList(force = false) {
-    const uuid = companyUuid();
+    const uuid = tenantUuid();
     if (!uuid) {
       items.value = [];
       allItems.value = [];
       allLoaded.value = false;
       loadedTenant.value = null;
-      return { error: noCompanyError() };
+      return missingCompanyResult({});
     }
 
     if (loadedTenant.value && loadedTenant.value !== uuid) {
@@ -141,8 +129,11 @@ export const useCurrenciesStore = defineStore("currencies", () => {
   }
 
   async function attach(payload) {
-    const uuid = companyUuid();
-    if (!uuid) return { currency: null, error: noCompanyError() };
+    const uuid = tenantUuid();
+    if (!uuid) {
+      const result = await missingCompanyResult({});
+      return { currency: null, error: result.error };
+    }
 
     saving.value = true;
     try {
@@ -165,8 +156,11 @@ export const useCurrenciesStore = defineStore("currencies", () => {
   }
 
   async function update(code, payload) {
-    const uuid = companyUuid();
-    if (!uuid) return { currency: null, error: noCompanyError() };
+    const uuid = tenantUuid();
+    if (!uuid) {
+      const result = await missingCompanyResult({});
+      return { currency: null, error: result.error };
+    }
 
     saving.value = true;
     try {
@@ -183,8 +177,11 @@ export const useCurrenciesStore = defineStore("currencies", () => {
   }
 
   async function detach(code) {
-    const uuid = companyUuid();
-    if (!uuid) return { error: noCompanyError() };
+    const uuid = tenantUuid();
+    if (!uuid) {
+      const result = await missingCompanyResult({});
+      return { error: result.error };
+    }
 
     saving.value = true;
     try {
@@ -202,8 +199,11 @@ export const useCurrenciesStore = defineStore("currencies", () => {
   }
 
   async function setBaseCurrency(code) {
-    const uuid = companyUuid();
-    if (!uuid) return { company: null, error: noCompanyError() };
+    const uuid = tenantUuid();
+    if (!uuid) {
+      const result = await missingCompanyResult({});
+      return { company: null, error: result.error };
+    }
 
     if (baseCurrency.value === code) {
       return { company: null, error: null };

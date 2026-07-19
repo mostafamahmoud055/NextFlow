@@ -47,15 +47,7 @@
     <v-card class="dashboard-card department-toolbar mb-4" elevation="0">
       <v-row density="comfortable" align="center">
         <v-col cols="12" md="3">
-          <v-text-field
-            v-model="search"
-            :label="t('common.search')"
-            prepend-inner-icon="mdi-magnify"
-            clearable
-            hide-details
-            @keyup.enter="applyFilters"
-            @click:clear="clearSearch"
-          />
+          <ListSearchField v-model="search" @search="applyFilters" />
         </v-col>
         <v-col cols="12" sm="6" md="2">
           <v-select
@@ -213,14 +205,15 @@
 
           <div
             v-if="store.meta.last_page > 1"
-            class="d-flex justify-center pt-4"
+            class="d-flex justify-center pt-4 pb-2"
           >
             <v-pagination
-              v-model="page"
+              :model-value="page"
               :length="store.meta.last_page"
               :disabled="store.loading"
+              :total-visible="7"
               density="comfortable"
-              @update:model-value="(p) => loadPage(p, true)"
+              @update:model-value="onPageChange"
             />
           </div>
         </template>
@@ -305,7 +298,8 @@ import { enumValue } from "~/utils/enumValue";
 import { useSnackbar } from "~/composables/useSnackbar";
 
 definePageMeta({
-  middleware: ["auth", "tenant"],
+  middleware: ["auth", "tenant", "permission"],
+  permission: ["departments.view", "departments.view_tree"],
 });
 
 const { t, locale } = useAppLocale();
@@ -401,8 +395,16 @@ function branchLabel(department) {
 }
 
 async function loadPage(nextPage = page.value, force = false) {
-  page.value = nextPage;
-  await store.fetchList(nextPage, force);
+  const target = Number(nextPage) || 1;
+  page.value = target;
+  await store.fetchList(target, force);
+  page.value = store.meta.current_page || target;
+}
+
+async function onPageChange(nextPage) {
+  if (store.loading) return;
+  if (Number(nextPage) === Number(page.value)) return;
+  await loadPage(nextPage, true);
 }
 
 async function loadTree() {
@@ -426,11 +428,6 @@ function applyFilters() {
   } else {
     loadPage(1, true);
   }
-}
-
-function clearSearch() {
-  search.value = "";
-  applyFilters();
 }
 
 function openCreate() {

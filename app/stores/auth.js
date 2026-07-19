@@ -58,6 +58,7 @@ export const useAuthStore = defineStore("auth", () => {
 
         tenantCookie.value = {
             id: match.uuid,
+            company_id: match.id,
             name: companyDisplayName(match),
         };
     }
@@ -172,6 +173,7 @@ export const useAuthStore = defineStore("auth", () => {
 
         tenantCookie.value = {
             id: company.uuid,
+            company_id: company.id,
             name: companyDisplayName(company),
         };
     }

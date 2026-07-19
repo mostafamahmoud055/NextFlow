@@ -77,21 +77,49 @@ export const navigationItems = [
     titleKey: "navigation.companySettings",
     icon: "mdi-office-building-cog-outline",
     children: [
-      { titleKey: "navigation.companyManagement", to: "/settings/company/companies" },
-      { titleKey: "navigation.branchManagement", to: "/settings/company/branches" },
-      { titleKey: "navigation.departmentsManagement", to: "/settings/company/departments" },
-      { titleKey: "navigation.warehousesManagement", to: "/settings/company/warehouses" },
+      {
+        titleKey: "navigation.companyManagement",
+        to: "/settings/company/companies",
+        permission: ["companies.view"],
+      },
+      {
+        titleKey: "navigation.branchManagement",
+        to: "/settings/company/branches",
+        permission: "branches.view",
+      },
+      {
+        titleKey: "navigation.departmentsManagement",
+        to: "/settings/company/departments",
+        permission: ["departments.view"],
+      },
+      {
+        titleKey: "navigation.warehousesManagement",
+        to: "/settings/company/warehouses",
+        permission: "warehouses.view",
+      },
     ],
   },
   {
     titleKey: "navigation.financialSetup",
     icon: "mdi-bank-outline",
     children: [
-      { titleKey: "navigation.fiscalYearsManagement", to: "/settings/company/fiscal-years" },
+      {
+        titleKey: "navigation.fiscalYearsManagement",
+        to: "/settings/company/fiscal-years",
+        permission: "fiscal_years.view",
+      },
       { titleKey: "navigation.accountingPeriodsManagement", to: "/settings/financial/accounting-periods" },
-      { titleKey: "navigation.currencyManagement", to: "/settings/financial/currencies" },
+      {
+        titleKey: "navigation.currencyManagement",
+        to: "/settings/financial/currencies",
+        permission: "currencies.view",
+      },
       { titleKey: "navigation.exchangeRatesManagement", to: "/settings/financial/exchange-rates" },
-      { titleKey: "navigation.taxManagement", to: "/settings/financial/taxes" },
+      {
+        titleKey: "navigation.taxManagement",
+        to: "/settings/financial/taxes",
+        permission: "taxes.view",
+      },
       { titleKey: "navigation.paymentTerms", to: "/settings/financial/payment-terms" },
       { titleKey: "navigation.costCentersManagement", to: "/settings/financial/cost-centers" },
       { titleKey: "navigation.profitCentersManagement", to: "/settings/financial/profit-centers" },
@@ -102,9 +130,21 @@ export const navigationItems = [
     titleKey: "navigation.accessControl",
     icon: "mdi-shield-account-outline",
     children: [
-      { titleKey: "navigation.userManagement", to: "/settings/access/users" },
-      { titleKey: "navigation.rolesManagement", to: "/settings/access/roles" },
-      { titleKey: "navigation.permissionsManagement", to: "/settings/access/permissions" },
+      {
+        titleKey: "navigation.userManagement",
+        to: "/settings/access/users",
+        permission: "users.view",
+      },
+      {
+        titleKey: "navigation.rolesManagement",
+        to: "/settings/access/roles",
+        permission: "roles.view",
+      },
+      {
+        titleKey: "navigation.permissionsManagement",
+        to: "/settings/access/permissions",
+        permission: "permissions.view",
+      },
       { titleKey: "navigation.approvalRulesManagement", to: "/settings/access/approval-rules" },
     ],
   },

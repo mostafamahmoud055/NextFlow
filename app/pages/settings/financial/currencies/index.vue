@@ -35,15 +35,7 @@
     <v-card class="dashboard-card currency-toolbar mb-4" elevation="0">
       <v-row density="comfortable" align="center">
         <v-col cols="12" md="8">
-          <v-text-field
-            v-model="search"
-            :label="t('common.search')"
-            prepend-inner-icon="mdi-magnify"
-            clearable
-            hide-details
-            @keyup.enter="applyFilters"
-            @click:clear="clearSearch"
-          />
+          <ListSearchField v-model="search" @search="applyFilters" />
         </v-col>
         <v-col cols="12" md="4" class="d-flex justify-end">
           <v-btn
@@ -244,7 +236,8 @@ import { ROUNDING_MODES } from "~/utils/currencyConstants";
 import { useSnackbar } from "~/composables/useSnackbar";
 
 definePageMeta({
-  middleware: ["auth", "tenant"],
+  middleware: ["auth", "tenant", "permission"],
+  permission: "currencies.view",
 });
 
 const { t, locale } = useAppLocale();
@@ -287,11 +280,6 @@ function roundingLabel(mode) {
 
 function applyFilters() {
   store.setFilters({ search: search.value || "" });
-}
-
-function clearSearch() {
-  search.value = "";
-  applyFilters();
 }
 
 async function openAttach() {

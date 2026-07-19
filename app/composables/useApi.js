@@ -181,6 +181,16 @@ export const useApi = () => {
 
     const resolvedUrl = buildUrl(path, requestOptions.params);
 
+    // Central RBAC (roles/permissions/users) requires numeric X-Company-Id.
+    // Tenant UUID stays in the cookie `id` for /tenant/{uuid}/... routes.
+    const companyId = tenantCookie.value?.company_id;
+    if (companyId != null && companyId !== "") {
+      requestOptions.headers = {
+        ...toHeaderObject(requestOptions.headers),
+        "X-Company-Id": String(companyId),
+      };
+    }
+
     return runRequest(
       (signal) => callApi(resolvedUrl, requestOptions, signal),
       resolvedUrl,
@@ -191,3 +201,9 @@ export const useApi = () => {
     fetchApi,
   };
 };
+
+function toHeaderObject(headers) {
+  if (!headers) return {};
+  if (headers instanceof Headers) return Object.fromEntries(headers.entries());
+  return headers;
+}

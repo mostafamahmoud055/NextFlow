@@ -15,8 +15,10 @@
         variant="plain"
         density="compact"
         hide-details
+        clearable
         single-line
         :aria-label="t('common.search')"
+        @click:clear="model = ''"
       />
     </v-sheet>
   </div>
