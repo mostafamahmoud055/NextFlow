@@ -50,6 +50,7 @@
                 item-title="title"
                 item-value="value"
                 :label="t('department.parent')"
+                :loading="parentsLoading"
                 clearable
                 variant="outlined"
                 :error-messages="fieldErrors.parent_id"
@@ -63,9 +64,25 @@
                 item-title="title"
                 item-value="value"
                 :label="t('department.branch')"
+                :loading="branchesLoading"
                 clearable
                 variant="outlined"
                 :error-messages="fieldErrors.branch_id"
+                hide-details="auto"
+              />
+            </v-col>
+
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="form.manager_id"
+                :items="managerItems"
+                item-title="title"
+                item-value="value"
+                :label="t('department.manager')"
+                :loading="usersLoading"
+                clearable
+                variant="outlined"
+                :error-messages="fieldErrors.manager_id"
                 hide-details="auto"
               />
             </v-col>
@@ -112,22 +129,30 @@ import {
   emptyDepartmentForm,
 } from "~/utils/departmentConstants";
 import { branchDisplayName } from "~/utils/branchConstants";
+import { userDisplayName } from "~/utils/userConstants";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   department: { type: Object, default: null },
-  parentOptions: { type: Array, default: () => [] },
-  branchOptions: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 const { t, locale } = useAppLocale();
+const branchesStore = useBranchesStore();
+const departmentsStore = useDepartmentsStore();
+const usersStore = useUsersStore();
 
 const formRef = ref(null);
 const form = reactive(emptyDepartmentForm());
 const fieldErrors = reactive({});
+const branches = ref([]);
+const parents = ref([]);
+const users = ref([]);
+const branchesLoading = ref(false);
+const parentsLoading = ref(false);
+const usersLoading = ref(false);
 
 const isEdit = computed(() => Boolean(props.department?.id));
 
@@ -139,7 +164,7 @@ const statusItems = computed(() =>
 );
 
 const parentItems = computed(() =>
-  props.parentOptions
+  parents.value
     .filter((item) => item.id !== props.department?.id)
     .map((item) => ({
       value: item.id,
@@ -148,9 +173,16 @@ const parentItems = computed(() =>
 );
 
 const branchItems = computed(() =>
-  props.branchOptions.map((item) => ({
+  branches.value.map((item) => ({
     value: item.id,
     title: branchDisplayName(item, locale.value),
+  })),
+);
+
+const managerItems = computed(() =>
+  users.value.map((user) => ({
+    value: user.id,
+    title: userDisplayName(user, locale.value),
   })),
 );
 
@@ -184,20 +216,49 @@ function hydrate() {
   );
 }
 
+async function loadBranches() {
+  branchesLoading.value = true;
+  try {
+    const { items, error } = await branchesStore.fetchAll();
+    if (!error) branches.value = items;
+  } finally {
+    branchesLoading.value = false;
+  }
+}
+
+async function loadParents() {
+  parentsLoading.value = true;
+  try {
+    const { items, error } = await departmentsStore.fetchAll();
+    if (!error) parents.value = items;
+  } finally {
+    parentsLoading.value = false;
+  }
+}
+
+async function loadUsers() {
+  usersLoading.value = true;
+  try {
+    const { items, error } = await usersStore.fetchAll();
+    if (!error) users.value = items;
+  } finally {
+    usersLoading.value = false;
+  }
+}
+
 function close() {
   emit("update:modelValue", false);
 }
 
 function cleanPayload(payload) {
-  const cleaned = {
+  return {
     name_ar: payload.name_ar?.trim() || "",
     name_en: payload.name_en?.trim() || "",
     status: payload.status || "active",
     parent_id: payload.parent_id ?? null,
     branch_id: payload.branch_id ?? null,
+    manager_id: payload.manager_id ?? null,
   };
-
-  return cleaned;
 }
 
 async function submit() {
@@ -213,7 +274,11 @@ async function submit() {
 watch(
   () => props.modelValue,
   (open) => {
-    if (open) hydrate();
+    if (!open) return;
+    hydrate();
+    loadParents();
+    loadBranches();
+    loadUsers();
   },
 );
 

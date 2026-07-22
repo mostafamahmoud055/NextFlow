@@ -11,7 +11,7 @@
       </div>
 
       <v-btn
-        v-if="canCreate"
+        v-if="canCreate && !showDeleted"
         color="primary"
         class="text-none"
         prepend-icon="mdi-plus"
@@ -39,7 +39,7 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" sm="6" md="3">
+        <v-col cols="12" sm="6" md="2">
           <v-select
             v-model="loginStatus"
             :items="loginStatusItems"
@@ -52,7 +52,19 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" md="2" class="d-flex justify-end">
+        <v-col cols="12" sm="6" md="2">
+          <v-select
+            v-model="trashedFilter"
+            :items="trashedItems"
+            item-title="title"
+            item-value="value"
+            :label="t('common.showDeleted')"
+            variant="outlined"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </v-col>
+        <v-col cols="12" md="1" class="d-flex justify-end">
           <v-btn
             variant="tonal"
             class="text-none"
@@ -83,9 +95,11 @@
           <thead>
             <tr>
               <th>{{ t('user.user') }}</th>
+              <th class="d-none d-md-table-cell">{{ t('user.mobile') }}</th>
               <th class="d-none d-md-table-cell">{{ t('user.roles') }}</th>
               <th>{{ t('user.status') }}</th>
               <th class="d-none d-lg-table-cell">{{ t('user.loginStatus') }}</th>
+              <th class="d-none d-xl-table-cell">{{ t('user.passwordExpiry') }}</th>
               <th class="text-end">{{ t('user.actions') }}</th>
             </tr>
           </thead>
@@ -106,6 +120,9 @@
                     </div>
                   </div>
                 </div>
+              </td>
+              <td class="d-none d-md-table-cell text-medium-emphasis">
+                {{ user.mobile || '—' }}
               </td>
               <td class="d-none d-md-table-cell text-medium-emphasis">
                 {{ rolesLabel(user) || '—' }}
@@ -132,6 +149,9 @@
                   }}
                 </v-chip>
               </td>
+              <td class="d-none d-xl-table-cell text-medium-emphasis">
+                {{ formatPasswordExpiry(user) }}
+              </td>
               <td class="text-end">
                 <v-menu location="bottom end">
                   <template #activator="{ props: menuProps }">
@@ -147,70 +167,89 @@
                   </template>
 
                   <v-list density="compact" min-width="220">
-                    <v-list-item
-                      v-if="canUpdate"
-                      prepend-icon="mdi-pencil-outline"
-                      :title="t('buttons.edit')"
-                      :disabled="actionLoading"
-                      @click="openEdit(user)"
-                    />
-                    <v-list-item
-                      v-if="canAssignRoles"
-                      prepend-icon="mdi-account-key-outline"
-                      :title="t('user.assignRoles')"
-                      :disabled="actionLoading"
-                      @click="openAssignRoles(user)"
-                    />
-                    <v-list-item
-                      v-if="canResetPassword"
-                      prepend-icon="mdi-lock-reset"
-                      :title="t('user.resetPassword')"
-                      :disabled="actionLoading"
-                      @click="openResetPassword(user)"
-                    />
-                    <v-list-item
-                      v-if="canViewActivity"
-                      prepend-icon="mdi-history"
-                      :title="t('user.viewActivity')"
-                      :disabled="actionLoading"
-                      @click="openActivity(user)"
-                    />
-                    <v-list-item
-                      v-if="canActivate && !isActive(user)"
-                      prepend-icon="mdi-check-circle-outline"
-                      :title="t('user.activate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(user, true)"
-                    />
-                    <v-list-item
-                      v-if="canDeactivate && isActive(user)"
-                      prepend-icon="mdi-cancel"
-                      :title="t('user.deactivate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(user, false)"
-                    />
-                    <v-list-item
-                      v-if="canLock && !isLocked(user)"
-                      prepend-icon="mdi-lock-outline"
-                      :title="t('user.lock')"
-                      :disabled="actionLoading"
-                      @click="toggleLock(user, true)"
-                    />
-                    <v-list-item
-                      v-if="canUnlock && isLocked(user)"
-                      prepend-icon="mdi-lock-open-outline"
-                      :title="t('user.unlock')"
-                      :disabled="actionLoading"
-                      @click="toggleLock(user, false)"
-                    />
-                    <v-list-item
-                      v-if="canDelete"
-                      prepend-icon="mdi-delete-outline"
-                      :title="t('buttons.delete')"
-                      class="text-error"
-                      :disabled="actionLoading"
-                      @click="confirmDelete(user)"
-                    />
+                    <template v-if="!showDeleted">
+                      <v-list-item
+                        v-if="canUpdate"
+                        prepend-icon="mdi-pencil-outline"
+                        :title="t('buttons.edit')"
+                        :disabled="actionLoading"
+                        @click="openEdit(user)"
+                      />
+                      <v-list-item
+                        v-if="canAssignRoles"
+                        prepend-icon="mdi-account-key-outline"
+                        :title="t('user.assignRoles')"
+                        :disabled="actionLoading"
+                        @click="openAssignRoles(user)"
+                      />
+                      <v-list-item
+                        v-if="canResetPassword"
+                        prepend-icon="mdi-lock-reset"
+                        :title="t('user.resetPassword')"
+                        :disabled="actionLoading"
+                        @click="openResetPassword(user)"
+                      />
+                      <v-list-item
+                        v-if="canViewActivity"
+                        prepend-icon="mdi-history"
+                        :title="t('user.viewActivity')"
+                        :disabled="actionLoading"
+                        @click="openActivity(user)"
+                      />
+                      <v-list-item
+                        v-if="canActivate && !isActive(user)"
+                        prepend-icon="mdi-check-circle-outline"
+                        :title="t('user.activate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(user, true)"
+                      />
+                      <v-list-item
+                        v-if="canDeactivate && isActive(user)"
+                        prepend-icon="mdi-cancel"
+                        :title="t('user.deactivate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(user, false)"
+                      />
+                      <v-list-item
+                        v-if="canLock && !isLocked(user)"
+                        prepend-icon="mdi-lock-outline"
+                        :title="t('user.lock')"
+                        :disabled="actionLoading"
+                        @click="toggleLock(user, true)"
+                      />
+                      <v-list-item
+                        v-if="canUnlock && isLocked(user)"
+                        prepend-icon="mdi-lock-open-outline"
+                        :title="t('user.unlock')"
+                        :disabled="actionLoading"
+                        @click="toggleLock(user, false)"
+                      />
+                      <v-list-item
+                        v-if="canDelete"
+                        prepend-icon="mdi-delete-outline"
+                        :title="t('buttons.delete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmDelete(user)"
+                      />
+                    </template>
+                    <template v-else>
+                      <v-list-item
+                        v-if="canRestore"
+                        prepend-icon="mdi-delete-restore"
+                        :title="t('buttons.restore')"
+                        :disabled="actionLoading"
+                        @click="handleRestore(user)"
+                      />
+                      <v-list-item
+                        v-if="canForceDelete"
+                        prepend-icon="mdi-delete-forever-outline"
+                        :title="t('buttons.permanentDelete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmForceDelete(user)"
+                      />
+                    </template>
                   </v-list>
                 </v-menu>
               </td>
@@ -238,7 +277,7 @@
       v-model="formOpen"
       :user="editingUser"
       :saving="store.saving || actionLoading"
-      :role-options="rolesStore.roleOptions"
+      :role-options="scopedRoleOptions"
       :roles-loading="rolesLoading"
       @submit="handleFormSubmit"
     />
@@ -416,6 +455,31 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="forceDeleteDialogOpen" max-width="440">
+      <v-card rounded="xl" class="pa-2">
+        <v-card-title class="text-h6 font-weight-bold">
+          {{ t('common.permanentDeleteTitle') }}
+        </v-card-title>
+        <v-card-text class="text-medium-emphasis">
+          {{ t('common.permanentDeleteConfirm', { name: forceDeleteTargetName }) }}
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" class="text-none" @click="forceDeleteDialogOpen = false">
+            {{ t('buttons.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            class="text-none"
+            :loading="actionLoading"
+            @click="handleForceDelete"
+          >
+            {{ t('buttons.permanentDelete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -435,7 +499,7 @@ definePageMeta({
 });
 
 const { t, locale } = useAppLocale();
-const { hasPermission } = usePermissions();
+const { hasPermission, branchScope } = usePermissions();
 const { showSnackbar } = useSnackbar();
 const store = useUsersStore();
 const rolesStore = useRolesStore();
@@ -447,6 +511,8 @@ useHead({
 const canCreate = computed(() => hasPermission("users.create"));
 const canUpdate = computed(() => hasPermission("users.update"));
 const canDelete = computed(() => hasPermission("users.delete"));
+const canRestore = computed(() => hasPermission("users.restore"));
+const canForceDelete = computed(() => hasPermission("users.force_delete"));
 const canActivate = computed(() => hasPermission("users.activate"));
 const canDeactivate = computed(() => hasPermission("users.deactivate"));
 const canLock = computed(() => hasPermission("users.lock"));
@@ -455,9 +521,12 @@ const canAssignRoles = computed(() => hasPermission("users.assign_roles"));
 const canResetPassword = computed(() => hasPermission("users.reset_password"));
 const canViewActivity = computed(() => hasPermission("users.view_activity"));
 
+const showDeleted = computed(() => store.filters.trashed === "only");
+
 const search = ref("");
 const status = ref(null);
 const loginStatus = ref(null);
+const trashedFilter = ref(null);
 const page = ref(1);
 const actionLoading = ref(false);
 const rolesLoading = ref(false);
@@ -481,9 +550,15 @@ const activityPage = ref(1);
 const activeUser = ref(null);
 const deleteOpen = ref(false);
 const deletingUser = ref(null);
+const forceDeleteDialogOpen = ref(false);
+const forceDeletingUser = ref(null);
 
 const deleteTargetName = computed(() =>
   displayName(deletingUser.value),
+);
+
+const forceDeleteTargetName = computed(() =>
+  displayName(forceDeletingUser.value),
 );
 
 const statusItems = computed(() =>
@@ -500,12 +575,29 @@ const loginStatusItems = computed(() =>
   })),
 );
 
+const trashedItems = computed(() => [
+  { value: null, title: t("common.showDeletedAll") },
+  { value: "only", title: t("common.showDeletedOnly") },
+]);
+
 const roleItems = computed(() =>
-  rolesStore.roleOptions.map((role) => ({
+  scopedRoleOptions.value.map((role) => ({
     value: role.id,
     title: role.name || role.code,
   })),
 );
+
+const scopedRoleOptions = computed(() =>
+  rolesStore.roleOptions.filter((role) => roleInBranchScope(role)),
+);
+
+function roleInBranchScope(role) {
+  const scope = branchScope.value;
+  if (scope == null) return true;
+  const roleScope = role.branch_scope;
+  if (!Array.isArray(roleScope) || !roleScope.length) return true;
+  return roleScope.some((id) => scope.includes(Number(id)));
+}
 
 function displayName(user) {
   return userDisplayName(user, locale.value);
@@ -531,6 +623,12 @@ function isLocked(user) {
 
 function rolesLabel(user) {
   return userRoleNames(user, locale.value);
+}
+
+function formatPasswordExpiry(user) {
+  const value = user?.password_expires_at;
+  if (!value) return "—";
+  return String(value).slice(0, 10);
 }
 
 function activitySubtitle(log) {
@@ -565,8 +663,23 @@ function applyFilters() {
     search: search.value?.trim() || "",
     status: status.value || null,
     login_status: loginStatus.value || null,
+    trashed: trashedFilter.value || null,
   });
   loadPage(1, true);
+}
+
+async function handleRestore(user) {
+  if (!user?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.restore(user.id);
+    if (!result.error) {
+      showSnackbar(t("user.restored"), 200);
+    }
+  } finally {
+    actionLoading.value = false;
+  }
 }
 
 async function openCreate() {
@@ -739,10 +852,32 @@ async function handleDelete() {
   }
 }
 
+function confirmForceDelete(user) {
+  forceDeletingUser.value = user;
+  forceDeleteDialogOpen.value = true;
+}
+
+async function handleForceDelete() {
+  if (!forceDeletingUser.value?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const { error } = await store.forceDestroy(forceDeletingUser.value.id);
+    if (!error) {
+      showSnackbar(t("common.permanentlyDeleted"), 200);
+      forceDeleteDialogOpen.value = false;
+      forceDeletingUser.value = null;
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
 onMounted(() => {
   search.value = store.filters.search || "";
   status.value = store.filters.status || null;
   loginStatus.value = store.filters.login_status || null;
+  trashedFilter.value = store.filters.trashed || null;
   loadPage(store.meta.current_page || 1);
 });
 </script>

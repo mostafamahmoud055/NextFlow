@@ -12,7 +12,7 @@
       </div>
 
       <v-btn
-        v-if="canCreate"
+        v-if="canCreate && !showDeleted"
         color="primary"
         class="text-none"
         prepend-icon="mdi-plus"
@@ -53,7 +53,19 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" md="2" class="d-flex justify-end">
+        <v-col cols="12" sm="6" md="2">
+          <v-select
+            v-model="trashedFilter"
+            :items="trashedItems"
+            item-title="title"
+            item-value="value"
+            :label="t('common.showDeleted')"
+            variant="outlined"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </v-col>
+        <v-col cols="12" md="1" class="d-flex justify-end">
           <v-btn
             variant="tonal"
             class="text-none"
@@ -126,49 +138,68 @@
                   </template>
 
                   <v-list density="compact" min-width="220">
-                    <v-list-item
-                      v-if="canUpdate"
-                      prepend-icon="mdi-pencil-outline"
-                      :title="t('buttons.edit')"
-                      :disabled="actionLoading"
-                      @click="openEdit(fiscalYear)"
-                    />
-                    <v-list-item
-                      v-if="canOpen && statusOf(fiscalYear) !== 'open'"
-                      prepend-icon="mdi-lock-open-outline"
-                      :title="t('fiscalYear.open')"
-                      :disabled="actionLoading"
-                      @click="runAction(() => store.open(fiscalYear.id), 'opened')"
-                    />
-                    <v-list-item
-                      v-if="canClose && statusOf(fiscalYear) === 'open'"
-                      prepend-icon="mdi-lock-outline"
-                      :title="t('fiscalYear.close')"
-                      :disabled="actionLoading"
-                      @click="runAction(() => store.close(fiscalYear.id), 'closed')"
-                    />
-                    <v-list-item
-                      v-if="canArchive && statusOf(fiscalYear) === 'closed'"
-                      prepend-icon="mdi-archive-outline"
-                      :title="t('fiscalYear.archive')"
-                      :disabled="actionLoading"
-                      @click="runAction(() => store.archive(fiscalYear.id), 'archived')"
-                    />
-                    <v-list-item
-                      v-if="canSetDefault && !fiscalYear.is_default"
-                      prepend-icon="mdi-star-outline"
-                      :title="t('fiscalYear.setDefault')"
-                      :disabled="actionLoading"
-                      @click="runAction(() => store.setDefault(fiscalYear.id), 'defaultSet')"
-                    />
-                    <v-list-item
-                      v-if="canDelete"
-                      prepend-icon="mdi-delete-outline"
-                      :title="t('buttons.delete')"
-                      class="text-error"
-                      :disabled="actionLoading"
-                      @click="confirmDelete(fiscalYear)"
-                    />
+                    <template v-if="!showDeleted">
+                      <v-list-item
+                        v-if="canUpdate"
+                        prepend-icon="mdi-pencil-outline"
+                        :title="t('buttons.edit')"
+                        :disabled="actionLoading"
+                        @click="openEdit(fiscalYear)"
+                      />
+                      <v-list-item
+                        v-if="canOpen && statusOf(fiscalYear) !== 'open'"
+                        prepend-icon="mdi-lock-open-outline"
+                        :title="t('fiscalYear.open')"
+                        :disabled="actionLoading"
+                        @click="runAction(() => store.open(fiscalYear.id), 'opened')"
+                      />
+                      <v-list-item
+                        v-if="canClose && statusOf(fiscalYear) === 'open'"
+                        prepend-icon="mdi-lock-outline"
+                        :title="t('fiscalYear.close')"
+                        :disabled="actionLoading"
+                        @click="runAction(() => store.close(fiscalYear.id), 'closed')"
+                      />
+                      <v-list-item
+                        v-if="canArchive && statusOf(fiscalYear) === 'closed'"
+                        prepend-icon="mdi-archive-outline"
+                        :title="t('fiscalYear.archive')"
+                        :disabled="actionLoading"
+                        @click="runAction(() => store.archive(fiscalYear.id), 'archived')"
+                      />
+                      <v-list-item
+                        v-if="canSetDefault && !fiscalYear.is_default"
+                        prepend-icon="mdi-star-outline"
+                        :title="t('fiscalYear.setDefault')"
+                        :disabled="actionLoading"
+                        @click="runAction(() => store.setDefault(fiscalYear.id), 'defaultSet')"
+                      />
+                      <v-list-item
+                        v-if="canDelete"
+                        prepend-icon="mdi-delete-outline"
+                        :title="t('buttons.delete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmDelete(fiscalYear)"
+                      />
+                    </template>
+                    <template v-else>
+                      <v-list-item
+                        v-if="canRestore"
+                        prepend-icon="mdi-delete-restore"
+                        :title="t('buttons.restore')"
+                        :disabled="actionLoading"
+                        @click="handleRestore(fiscalYear)"
+                      />
+                      <v-list-item
+                        v-if="canForceDelete"
+                        prepend-icon="mdi-delete-forever-outline"
+                        :title="t('buttons.permanentDelete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmForceDelete(fiscalYear)"
+                      />
+                    </template>
                   </v-list>
                 </v-menu>
               </td>
@@ -223,6 +254,31 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="forceDeleteDialogOpen" max-width="440">
+      <v-card rounded="xl" class="pa-2">
+        <v-card-title class="text-h6 font-weight-bold">
+          {{ t('common.permanentDeleteTitle') }}
+        </v-card-title>
+        <v-card-text class="text-medium-emphasis">
+          {{ t('common.permanentDeleteConfirm', { name: forceDeletingFiscalYear?.fiscal_year_code || '' }) }}
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" class="text-none" @click="forceDeleteDialogOpen = false">
+            {{ t('buttons.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            class="text-none"
+            :loading="actionLoading"
+            @click="handleForceDelete"
+          >
+            {{ t('buttons.permanentDelete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -249,20 +305,27 @@ useHead({
 const canCreate = computed(() => hasPermission("fiscal_years.create"));
 const canUpdate = computed(() => hasPermission("fiscal_years.update"));
 const canDelete = computed(() => hasPermission("fiscal_years.delete"));
+const canRestore = computed(() => hasPermission("fiscal_years.restore"));
+const canForceDelete = computed(() => hasPermission("fiscal_years.force_delete"));
 const canOpen = computed(() => hasPermission("fiscal_years.open"));
 const canClose = computed(() => hasPermission("fiscal_years.close"));
 const canArchive = computed(() => hasPermission("fiscal_years.archive"));
 const canSetDefault = computed(() => hasPermission("fiscal_years.set_default"));
 
+const showDeleted = computed(() => store.filters.trashed === "only");
+
 const search = ref("");
 const status = ref(null);
 const isDefault = ref(null);
+const trashedFilter = ref(null);
 const page = ref(1);
 const dialogOpen = ref(false);
 const editingFiscalYear = ref(null);
 const actionLoading = ref(false);
 const deleteDialogOpen = ref(false);
 const deletingFiscalYear = ref(null);
+const forceDeleteDialogOpen = ref(false);
+const forceDeletingFiscalYear = ref(null);
 
 const statusItems = computed(() =>
   FISCAL_YEAR_STATUSES.map((item) => ({
@@ -274,6 +337,11 @@ const statusItems = computed(() =>
 const defaultItems = computed(() => [
   { value: true, title: t("fiscalYear.defaultYes") },
   { value: false, title: t("fiscalYear.defaultNo") },
+]);
+
+const trashedItems = computed(() => [
+  { value: null, title: t("common.showDeletedAll") },
+  { value: "only", title: t("common.showDeletedOnly") },
 ]);
 
 function statusOf(fiscalYear) {
@@ -317,8 +385,23 @@ function applyFilters() {
     search: search.value?.trim() || "",
     status: status.value || null,
     is_default: isDefault.value,
+    trashed: trashedFilter.value || null,
   });
   loadPage(1, true);
+}
+
+async function handleRestore(fiscalYear) {
+  if (!fiscalYear?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.restore(fiscalYear.id);
+    if (!result.error) {
+      showSnackbar(t("fiscalYear.restored"), 200);
+    }
+  } finally {
+    actionLoading.value = false;
+  }
 }
 
 function openCreate() {
@@ -389,10 +472,32 @@ async function handleDelete() {
   }
 }
 
+function confirmForceDelete(fiscalYear) {
+  forceDeletingFiscalYear.value = fiscalYear;
+  forceDeleteDialogOpen.value = true;
+}
+
+async function handleForceDelete() {
+  if (!forceDeletingFiscalYear.value?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.forceDestroy(forceDeletingFiscalYear.value.id);
+    if (!result.error) {
+      showSnackbar(t("common.permanentlyDeleted"), 200);
+      forceDeleteDialogOpen.value = false;
+      forceDeletingFiscalYear.value = null;
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
 onMounted(() => {
   search.value = store.filters.search || "";
   status.value = store.filters.status || null;
   isDefault.value = store.filters.is_default;
+  trashedFilter.value = store.filters.trashed || null;
   loadPage(store.meta.current_page || 1);
 });
 </script>

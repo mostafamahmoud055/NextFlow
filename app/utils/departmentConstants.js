@@ -19,6 +19,7 @@ export function emptyDepartmentForm() {
     name_en: "",
     parent_id: null,
     branch_id: null,
+    manager_id: null,
     status: "active",
   };
 }
@@ -31,6 +32,7 @@ export function departmentToForm(department) {
     name_en: department.name_en || "",
     parent_id: department.parent_id ?? null,
     branch_id: department.branch_id ?? null,
+    manager_id: department.manager_id ?? null,
     status: enumValue(department.status) || "active",
   };
 }

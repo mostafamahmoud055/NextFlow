@@ -12,6 +12,11 @@ export const useDepartmentsStore = defineStore("departments", () => {
   const allLoaded = ref(false);
   const loadedTenant = ref(null);
 
+  const optionsItems = ref([]);
+  const optionsLoaded = ref(false);
+  const optionsTenant = ref(null);
+  let optionsPromise = null;
+
   const items = ref([]);
   const treeItems = ref([]);
   const meta = ref({ current_page: 1, per_page: 15, last_page: 1, total: 0 });
@@ -20,11 +25,34 @@ export const useDepartmentsStore = defineStore("departments", () => {
     status: null,
     branch_id: null,
     parent_id: null,
+    trashed: null,
     per_page: 15,
   });
   const loading = ref(false);
   const treeLoading = ref(false);
   const saving = ref(false);
+
+  function clearOptionsCache() {
+    optionsItems.value = [];
+    optionsLoaded.value = false;
+    optionsTenant.value = null;
+    optionsPromise = null;
+  }
+
+  function setOptionItem(department) {
+    const i = optionsItems.value.findIndex((d) => d.id === department.id);
+    if (i === -1) {
+      optionsItems.value = [department, ...optionsItems.value];
+    } else {
+      const next = [...optionsItems.value];
+      next[i] = department;
+      optionsItems.value = next;
+    }
+  }
+
+  function removeOptionItem(id) {
+    optionsItems.value = optionsItems.value.filter((d) => d.id !== id);
+  }
 
   function setItem(department) {
     const i = items.value.findIndex((d) => d.id === department.id);
@@ -38,12 +66,15 @@ export const useDepartmentsStore = defineStore("departments", () => {
     const j = allItems.value.findIndex((d) => d.id === department.id);
     if (j === -1) allItems.value.unshift(department);
     else allItems.value[j] = department;
+
+    if (optionsLoaded.value) setOptionItem(department);
   }
 
   function removeItem(id) {
     items.value = items.value.filter((d) => d.id !== id);
     allItems.value = allItems.value.filter((d) => d.id !== id);
     meta.value.total = Math.max(0, meta.value.total - 1);
+    if (optionsLoaded.value) removeOptionItem(id);
   }
 
   async function fetchList(page = 1, force = false) {
@@ -53,13 +84,15 @@ export const useDepartmentsStore = defineStore("departments", () => {
       allLoaded.value = false;
       loadedTenant.value = null;
       treeItems.value = [];
+      clearOptionsCache();
     }
 
     const hasFilters = !!(
       filters.value.search ||
       filters.value.status ||
       filters.value.branch_id ||
-      filters.value.parent_id
+      filters.value.parent_id ||
+      filters.value.trashed
     );
 
     if (!hasFilters && allLoaded.value && !force && loadedTenant.value === tenantId) {
@@ -74,6 +107,7 @@ export const useDepartmentsStore = defineStore("departments", () => {
       if (filters.value.status) params.status = filters.value.status;
       if (filters.value.branch_id) params.branch_id = filters.value.branch_id;
       if (filters.value.parent_id) params.parent_id = filters.value.parent_id;
+      if (filters.value.trashed) params.trashed = filters.value.trashed;
 
       const result = await fetchApi("/departments", { tenant: true, params });
       if (result.error) {
@@ -120,6 +154,54 @@ export const useDepartmentsStore = defineStore("departments", () => {
     } finally {
       treeLoading.value = false;
     }
+  }
+
+  async function fetchAll(force = false) {
+    const tenantId = useCookie("nf_tenant").value?.id ?? null;
+
+    if (optionsTenant.value && optionsTenant.value !== tenantId) {
+      clearOptionsCache();
+    }
+
+    if (!force && optionsLoaded.value && optionsTenant.value === tenantId) {
+      return { items: optionsItems.value, error: null };
+    }
+
+    if (!force && optionsPromise) return optionsPromise;
+
+    optionsPromise = (async () => {
+      const collected = [];
+      let page = 1;
+      let lastPage = 1;
+
+      do {
+        const result = await fetchApi("/departments", {
+          tenant: true,
+          params: { page, per_page: '*' },
+          silent: true,
+        });
+
+        if (result.error) {
+          return { items: [], error: result.error };
+        }
+
+        const data = unwrap(result.data) || {};
+        const fetched = data.items?.data || data.items || [];
+        collected.push(...fetched);
+        lastPage = Number(data.meta?.last_page) || 1;
+        page += 1;
+      } while (page <= lastPage);
+
+      optionsItems.value = collected;
+      optionsLoaded.value = true;
+      optionsTenant.value = tenantId;
+
+      return { items: optionsItems.value, error: null };
+    })().finally(() => {
+      optionsPromise = null;
+    });
+
+    return optionsPromise;
   }
 
   async function show(id) {
@@ -181,10 +263,56 @@ export const useDepartmentsStore = defineStore("departments", () => {
     return { department, error: result.error };
   }
 
+  async function assignEmployees(id, userIds) {
+    saving.value = true;
+    try {
+      const result = await fetchApi(`/departments/${id}/assign-employees`, {
+        tenant: true,
+        method: "PATCH",
+        body: { user_ids: userIds },
+      });
+      const department = result.error ? null : unwrap(result.data);
+      if (department) setItem(department);
+      return { department, error: result.error };
+    } finally {
+      saving.value = false;
+    }
+  }
+
   async function destroy(id) {
     saving.value = true;
     try {
       const result = await fetchApi(`/departments/${id}`, {
+        tenant: true,
+        method: "DELETE",
+      });
+      if (!result.error) removeItem(id);
+      return { error: result.error };
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function restore(id) {
+    const result = await fetchApi(`/departments/${id}/restore`, {
+      tenant: true,
+      method: "PATCH",
+    });
+    const department = result.error ? null : unwrap(result.data);
+    if (department) {
+      if (filters.value.trashed === "only") {
+        removeItem(id);
+      } else {
+        setItem(department);
+      }
+    }
+    return { department, error: result.error };
+  }
+
+  async function forceDestroy(id) {
+    saving.value = true;
+    try {
+      const result = await fetchApi(`/departments/${id}/force`, {
         tenant: true,
         method: "DELETE",
       });
@@ -203,6 +331,8 @@ export const useDepartmentsStore = defineStore("departments", () => {
     items,
     allItems,
     allLoaded,
+    optionsItems,
+    optionsLoaded,
     treeItems,
     meta,
     filters,
@@ -210,13 +340,17 @@ export const useDepartmentsStore = defineStore("departments", () => {
     treeLoading,
     saving,
     fetchList,
+    fetchAll,
     fetchTree,
     show,
     create,
     update,
     activate,
     deactivate,
+    assignEmployees,
     destroy,
+    restore,
+    forceDestroy,
     setFilters,
   };
 });

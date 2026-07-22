@@ -11,7 +11,7 @@
       </div>
 
       <v-btn
-        v-if="canCreate"
+        v-if="canCreate && !showDeleted"
         color="primary"
         class="text-none"
         prepend-icon="mdi-plus"
@@ -52,7 +52,19 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" md="2" class="d-flex justify-end">
+        <v-col cols="12" sm="6" md="2">
+          <v-select
+            v-model="trashedFilter"
+            :items="trashedItems"
+            item-title="title"
+            item-value="value"
+            :label="t('common.showDeleted')"
+            variant="outlined"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </v-col>
+        <v-col cols="12" md="1" class="d-flex justify-end">
           <v-btn
             variant="tonal"
             class="text-none"
@@ -85,6 +97,7 @@
               <th>{{ t('branch.branch') }}</th>
               <th class="d-none d-md-table-cell">{{ t('branch.code') }}</th>
               <th class="d-none d-lg-table-cell">{{ t('branch.type') }}</th>
+              <th class="d-none d-lg-table-cell">{{ t('branch.manager') }}</th>
               <th class="d-none d-lg-table-cell">{{ t('branch.location') }}</th>
               <th>{{ t('branch.status') }}</th>
               <th class="text-end">{{ t('branch.actions') }}</th>
@@ -117,6 +130,9 @@
                 <span class="text-medium-emphasis">{{ typeLabel(branch) }}</span>
               </td>
               <td class="d-none d-lg-table-cell">
+                <span class="text-medium-emphasis">{{ managerLabel(branch) }}</span>
+              </td>
+              <td class="d-none d-lg-table-cell">
                 <span class="text-medium-emphasis">{{ locationLabel(branch) }}</span>
               </td>
               <td>
@@ -143,35 +159,61 @@
                   </template>
 
                   <v-list density="compact" min-width="200">
-                    <v-list-item
-                      v-if="canUpdate"
-                      prepend-icon="mdi-pencil-outline"
-                      :title="t('buttons.edit')"
-                      :disabled="actionLoading"
-                      @click="openEdit(branch)"
-                    />
-                    <v-list-item
-                      v-if="canActivate && !isActive(branch)"
-                      prepend-icon="mdi-check-circle-outline"
-                      :title="t('branch.activate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(branch, true)"
-                    />
-                    <v-list-item
-                      v-if="canDeactivate && isActive(branch)"
-                      prepend-icon="mdi-cancel"
-                      :title="t('branch.deactivate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(branch, false)"
-                    />
-                    <v-list-item
-                      v-if="canDelete"
-                      prepend-icon="mdi-delete-outline"
-                      :title="t('buttons.delete')"
-                      class="text-error"
-                      :disabled="actionLoading"
-                      @click="confirmDelete(branch)"
-                    />
+                    <template v-if="!showDeleted">
+                      <v-list-item
+                        v-if="canUpdate && canAccessBranch(branch.id)"
+                        prepend-icon="mdi-pencil-outline"
+                        :title="t('buttons.edit')"
+                        :disabled="actionLoading"
+                        @click="openEdit(branch)"
+                      />
+                      <v-list-item
+                        v-if="canAssignEmployees && canAccessBranch(branch.id)"
+                        prepend-icon="mdi-account-multiple-outline"
+                        :title="t('branch.assignEmployees')"
+                        :disabled="actionLoading || !isActive(branch)"
+                        @click="openAssignEmployees(branch)"
+                      />
+                      <v-list-item
+                        v-if="canActivate && canAccessBranch(branch.id) && !isActive(branch)"
+                        prepend-icon="mdi-check-circle-outline"
+                        :title="t('branch.activate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(branch, true)"
+                      />
+                      <v-list-item
+                        v-if="canDeactivate && canAccessBranch(branch.id) && isActive(branch)"
+                        prepend-icon="mdi-cancel"
+                        :title="t('branch.deactivate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(branch, false)"
+                      />
+                      <v-list-item
+                        v-if="canDelete && canAccessBranch(branch.id)"
+                        prepend-icon="mdi-delete-outline"
+                        :title="t('buttons.delete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmDelete(branch)"
+                      />
+                    </template>
+                    <template v-else>
+                      <v-list-item
+                        v-if="canRestore && canAccessBranch(branch.id)"
+                        prepend-icon="mdi-delete-restore"
+                        :title="t('buttons.restore')"
+                        :disabled="actionLoading"
+                        @click="handleRestore(branch)"
+                      />
+                      <v-list-item
+                        v-if="canForceDelete && canAccessBranch(branch.id)"
+                        prepend-icon="mdi-delete-forever-outline"
+                        :title="t('buttons.permanentDelete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmForceDelete(branch)"
+                      />
+                    </template>
                   </v-list>
                 </v-menu>
               </td>
@@ -202,6 +244,13 @@
       @submit="handleSubmit"
     />
 
+    <BranchAssignEmployeesDialog
+      v-model="assignEmployeesOpen"
+      :branch="assigningBranch"
+      :saving="store.saving || actionLoading"
+      @submit="handleAssignEmployees"
+    />
+
     <v-dialog v-model="deleteDialogOpen" max-width="440">
       <v-card rounded="xl" class="pa-2">
         <v-card-title class="text-h6 font-weight-bold">
@@ -226,16 +275,43 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="forceDeleteDialogOpen" max-width="440">
+      <v-card rounded="xl" class="pa-2">
+        <v-card-title class="text-h6 font-weight-bold">
+          {{ t('common.permanentDeleteTitle') }}
+        </v-card-title>
+        <v-card-text class="text-medium-emphasis">
+          {{ t('common.permanentDeleteConfirm', { name: forceDeleteTargetName }) }}
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" class="text-none" @click="forceDeleteDialogOpen = false">
+            {{ t('buttons.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            class="text-none"
+            :loading="actionLoading"
+            @click="handleForceDelete"
+          >
+            {{ t('buttons.permanentDelete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
 import BranchFormDialog from "~/components/branch/BranchFormDialog.vue";
+import BranchAssignEmployeesDialog from "~/components/branch/BranchAssignEmployeesDialog.vue";
 import {
   BRANCH_STATUSES,
   BRANCH_TYPES,
   branchDisplayName,
 } from "~/utils/branchConstants";
+import { userDisplayName } from "~/utils/userConstants";
 import { enumValue } from "~/utils/enumValue";
 import { useSnackbar } from "~/composables/useSnackbar";
 
@@ -245,9 +321,10 @@ definePageMeta({
 });
 
 const { t, locale } = useAppLocale();
-const { hasPermission } = usePermissions();
+const { hasPermission, canAccessBranch } = usePermissions();
 const { showSnackbar } = useSnackbar();
 const store = useBranchesStore();
+const usersStore = useUsersStore();
 
 useHead({
   title: () => t("navigation.branchManagement"),
@@ -256,21 +333,46 @@ useHead({
 const canCreate = computed(() => hasPermission("branches.create"));
 const canUpdate = computed(() => hasPermission("branches.update"));
 const canDelete = computed(() => hasPermission("branches.delete"));
+const canRestore = computed(() => hasPermission("branches.restore"));
+const canForceDelete = computed(() => hasPermission("branches.force_delete"));
 const canActivate = computed(() => hasPermission("branches.activate"));
 const canDeactivate = computed(() => hasPermission("branches.deactivate"));
+const canAssignEmployees = computed(() =>
+  hasPermission("branches.assign_employees"),
+);
+
+const showDeleted = computed(() => store.filters.trashed === "only");
 
 const search = ref("");
 const status = ref(null);
 const type = ref(null);
+const trashedFilter = ref(null);
 const page = ref(1);
 const dialogOpen = ref(false);
 const editingBranch = ref(null);
 const actionLoading = ref(false);
 const deleteDialogOpen = ref(false);
 const deletingBranch = ref(null);
+const forceDeleteDialogOpen = ref(false);
+const forceDeletingBranch = ref(null);
+const assignEmployeesOpen = ref(false);
+const assigningBranch = ref(null);
+const allUsers = ref([]);
+
+const usersById = computed(() => {
+  const map = new Map();
+  for (const user of allUsers.value) {
+    map.set(user.id, user);
+  }
+  return map;
+});
 
 const deleteTargetName = computed(() =>
   deletingBranch.value ? displayName(deletingBranch.value) : "",
+);
+
+const forceDeleteTargetName = computed(() =>
+  forceDeletingBranch.value ? displayName(forceDeletingBranch.value) : "",
 );
 
 const statusItems = computed(() =>
@@ -286,6 +388,11 @@ const typeItems = computed(() =>
     title: t(item.labelKey),
   })),
 );
+
+const trashedItems = computed(() => [
+  { value: null, title: t("common.showDeletedAll") },
+  { value: "only", title: t("common.showDeletedOnly") },
+]);
 
 function displayName(branch) {
   return branchDisplayName(branch, locale.value);
@@ -311,6 +418,17 @@ function locationLabel(branch) {
   return [branch.city, branch.country].filter(Boolean).join(", ") || "—";
 }
 
+function managerLabel(branch) {
+  if (!branch.manager_id) return "—";
+  const user = usersById.value.get(branch.manager_id);
+  return user ? userDisplayName(user, locale.value) : "—";
+}
+
+async function loadUsers() {
+  const { items, error } = await usersStore.fetchAll();
+  if (!error) allUsers.value = items;
+}
+
 async function loadPage(nextPage = page.value, force = false) {
   const target = Number(nextPage) || 1;
   page.value = target;
@@ -329,8 +447,23 @@ function applyFilters() {
     search: search.value?.trim() || "",
     status: status.value || null,
     type: type.value || null,
+    trashed: trashedFilter.value || null,
   });
   loadPage(1, true);
+}
+
+async function handleRestore(branch) {
+  if (!branch?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.restore(branch.id);
+    if (!result.error) {
+      showSnackbar(t("branch.restored"), 200);
+    }
+  } finally {
+    actionLoading.value = false;
+  }
 }
 
 function openCreate() {
@@ -341,6 +474,33 @@ function openCreate() {
 function openEdit(branch) {
   editingBranch.value = branch;
   dialogOpen.value = true;
+}
+
+function openAssignEmployees(branch) {
+  assigningBranch.value = branch;
+  assignEmployeesOpen.value = true;
+}
+
+async function handleAssignEmployees({ userIds, applyServerErrors }) {
+  if (!assigningBranch.value?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const { error } = await store.assignEmployees(
+      assigningBranch.value.id,
+      userIds,
+    );
+    if (error) {
+      applyServerErrors(error.errors);
+      return;
+    }
+
+    showSnackbar(t("branch.employeesAssigned"), 200);
+    assignEmployeesOpen.value = false;
+    assigningBranch.value = null;
+  } finally {
+    actionLoading.value = false;
+  }
 }
 
 async function handleSubmit({ payload, applyServerErrors }) {
@@ -416,11 +576,39 @@ async function handleDelete() {
   }
 }
 
-onMounted(() => {
+function confirmForceDelete(branch) {
+  forceDeletingBranch.value = branch;
+  forceDeleteDialogOpen.value = true;
+}
+
+async function handleForceDelete() {
+  if (!forceDeletingBranch.value?.id) return;
+
+  actionLoading.value = true;
+
+  try {
+    const result = await store.forceDestroy(forceDeletingBranch.value.id);
+
+    if (!result.error) {
+      showSnackbar(t("common.permanentlyDeleted"), 200);
+      forceDeleteDialogOpen.value = false;
+      forceDeletingBranch.value = null;
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+onMounted(async () => {
   search.value = store.filters.search || "";
   status.value = store.filters.status || null;
   type.value = store.filters.type || null;
-  loadPage(store.meta.current_page || 1);
+  trashedFilter.value = store.filters.trashed || null;
+
+  await Promise.all([
+    loadPage(store.meta.current_page || 1),
+    loadUsers(),
+  ]);
 });
 </script>
 

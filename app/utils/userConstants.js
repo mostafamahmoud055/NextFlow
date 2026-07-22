@@ -21,7 +21,9 @@ export function emptyUserForm() {
     name_en: "",
     name_ar: "",
     email: "",
+    mobile: "",
     password: "",
+    password_expires_at: "",
     status: "active",
     login_status: "unlocked",
     roles: [],
@@ -35,7 +37,11 @@ export function userToForm(user) {
     name_en: user.name_en || "",
     name_ar: user.name_ar || "",
     email: user.email || "",
+    mobile: user.mobile || "",
     password: "",
+    password_expires_at: user.password_expires_at
+      ? String(user.password_expires_at).slice(0, 10)
+      : "",
     status: user.status || "active",
     login_status: user.login_status || "unlocked",
     roles: (user.roles || []).map((role) => role.id).filter(Boolean),

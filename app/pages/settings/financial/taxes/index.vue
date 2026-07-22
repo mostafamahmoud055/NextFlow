@@ -11,7 +11,7 @@
       </div>
 
       <v-btn
-        v-if="canCreate"
+        v-if="canCreate && !showDeleted"
         color="primary"
         class="text-none"
         prepend-icon="mdi-plus"
@@ -52,7 +52,7 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" sm="6" md="3">
+        <v-col cols="12" sm="6" md="2">
           <v-select
             v-model="scope"
             :items="scopeItems"
@@ -65,7 +65,19 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" sm="6" md="2" class="d-flex justify-end">
+        <v-col cols="12" sm="6" md="2">
+          <v-select
+            v-model="trashedFilter"
+            :items="trashedItems"
+            item-title="title"
+            item-value="value"
+            :label="t('common.showDeleted')"
+            variant="outlined"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </v-col>
+        <v-col cols="12" sm="6" md="1" class="d-flex justify-end">
           <v-btn
             variant="tonal"
             class="text-none"
@@ -154,36 +166,76 @@
                     </v-btn>
                   </template>
 
-                  <v-list density="compact" min-width="200">
-                    <v-list-item
-                      v-if="canUpdate"
-                      prepend-icon="mdi-pencil-outline"
-                      :title="t('buttons.edit')"
-                      :disabled="actionLoading"
-                      @click="openEdit(tax)"
-                    />
-                    <v-list-item
-                      v-if="canActivate && !isActive(tax)"
-                      prepend-icon="mdi-check-circle-outline"
-                      :title="t('tax.activate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(tax, true)"
-                    />
-                    <v-list-item
-                      v-if="canDeactivate && isActive(tax)"
-                      prepend-icon="mdi-cancel"
-                      :title="t('tax.deactivate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(tax, false)"
-                    />
-                    <v-list-item
-                      v-if="canDelete"
-                      prepend-icon="mdi-delete-outline"
-                      :title="t('buttons.delete')"
-                      class="text-error"
-                      :disabled="actionLoading"
-                      @click="confirmDelete(tax)"
-                    />
+                  <v-list density="compact" min-width="220">
+                    <template v-if="!showDeleted">
+                      <v-list-item
+                        v-if="canUpdate"
+                        prepend-icon="mdi-pencil-outline"
+                        :title="t('buttons.edit')"
+                        :disabled="actionLoading"
+                        @click="openEdit(tax)"
+                      />
+                      <v-list-item
+                        v-if="canViewHistory"
+                        prepend-icon="mdi-history"
+                        :title="t('tax.viewHistory')"
+                        :disabled="actionLoading"
+                        @click="openHistory(tax)"
+                      />
+                      <v-list-item
+                        v-if="canCreateVersion"
+                        prepend-icon="mdi-file-plus-outline"
+                        :title="t('tax.createVersion')"
+                        :disabled="actionLoading"
+                        @click="openCreateVersion(tax)"
+                      />
+                      <v-list-item
+                        v-if="canApprove && !isActive(tax)"
+                        prepend-icon="mdi-check-decagram-outline"
+                        :title="t('tax.approve')"
+                        :disabled="actionLoading"
+                        @click="handleApprove(tax)"
+                      />
+                      <v-list-item
+                        v-if="canActivate && !isActive(tax)"
+                        prepend-icon="mdi-check-circle-outline"
+                        :title="t('tax.activate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(tax, true)"
+                      />
+                      <v-list-item
+                        v-if="canDeactivate && isActive(tax)"
+                        prepend-icon="mdi-cancel"
+                        :title="t('tax.deactivate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(tax, false)"
+                      />
+                      <v-list-item
+                        v-if="canDelete"
+                        prepend-icon="mdi-delete-outline"
+                        :title="t('buttons.delete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmDelete(tax)"
+                      />
+                    </template>
+                    <template v-else>
+                      <v-list-item
+                        v-if="canRestore"
+                        prepend-icon="mdi-delete-restore"
+                        :title="t('buttons.restore')"
+                        :disabled="actionLoading"
+                        @click="handleRestore(tax)"
+                      />
+                      <v-list-item
+                        v-if="canForceDelete"
+                        prepend-icon="mdi-delete-forever-outline"
+                        :title="t('buttons.permanentDelete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmForceDelete(tax)"
+                      />
+                    </template>
                   </v-list>
                 </v-menu>
               </td>
@@ -210,8 +262,15 @@
     <TaxFormDialog
       v-model="dialogOpen"
       :tax="editingTax"
+      :mode="dialogMode"
       :saving="store.saving || actionLoading"
+      :can-approve="canApprove"
       @submit="handleSubmit"
+    />
+
+    <TaxHistoryDialog
+      v-model="historyOpen"
+      :tax="historyTax"
     />
 
     <v-dialog v-model="deleteDialogOpen" max-width="440">
@@ -238,11 +297,37 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="forceDeleteDialogOpen" max-width="440">
+      <v-card rounded="xl" class="pa-2">
+        <v-card-title class="text-h6 font-weight-bold">
+          {{ t('common.permanentDeleteTitle') }}
+        </v-card-title>
+        <v-card-text class="text-medium-emphasis">
+          {{ t('common.permanentDeleteConfirm', { name: forceDeleteTargetName }) }}
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" class="text-none" @click="forceDeleteDialogOpen = false">
+            {{ t('buttons.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            class="text-none"
+            :loading="actionLoading"
+            @click="handleForceDelete"
+          >
+            {{ t('buttons.permanentDelete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
 import TaxFormDialog from "~/components/tax/TaxFormDialog.vue";
+import TaxHistoryDialog from "~/components/tax/TaxHistoryDialog.vue";
 import {
   TAX_SCOPES,
   TAX_STATUSES,
@@ -269,22 +354,44 @@ useHead({
 const canCreate = computed(() => hasPermission("taxes.create"));
 const canUpdate = computed(() => hasPermission("taxes.update"));
 const canDelete = computed(() => hasPermission("taxes.delete"));
+const canRestore = computed(() => hasPermission("taxes.restore"));
+const canForceDelete = computed(() => hasPermission("taxes.force_delete"));
 const canActivate = computed(() => hasPermission("taxes.activate"));
 const canDeactivate = computed(() => hasPermission("taxes.deactivate"));
+const canApprove = computed(() => hasPermission("taxes.approve"));
+const canViewHistory = computed(
+  () =>
+    hasPermission("taxes.view_history") || hasPermission("taxes.view"),
+);
+const canCreateVersion = computed(() =>
+  hasPermission("taxes.create_version"),
+);
+
+const showDeleted = computed(() => store.filters.trashed === "only");
 
 const search = ref("");
 const status = ref(null);
 const type = ref(null);
 const scope = ref(null);
+const trashedFilter = ref(null);
 const page = ref(1);
 const dialogOpen = ref(false);
+const dialogMode = ref("create");
 const editingTax = ref(null);
+const historyOpen = ref(false);
+const historyTax = ref(null);
 const actionLoading = ref(false);
 const deleteDialogOpen = ref(false);
 const deletingTax = ref(null);
+const forceDeleteDialogOpen = ref(false);
+const forceDeletingTax = ref(null);
 
 const deleteTargetName = computed(() =>
   deletingTax.value ? displayName(deletingTax.value) : "",
+);
+
+const forceDeleteTargetName = computed(() =>
+  forceDeletingTax.value ? displayName(forceDeletingTax.value) : "",
 );
 
 const statusItems = computed(() =>
@@ -296,6 +403,11 @@ const typeItems = computed(() =>
 const scopeItems = computed(() =>
   TAX_SCOPES.map((item) => ({ value: item.value, title: t(item.labelKey) })),
 );
+
+const trashedItems = computed(() => [
+  { value: null, title: t("common.showDeletedAll") },
+  { value: "only", title: t("common.showDeletedOnly") },
+]);
 
 function displayName(tax) {
   return taxDisplayName(tax, locale.value);
@@ -347,25 +459,69 @@ function applyFilters() {
     status: status.value || null,
     type: type.value || null,
     scope: scope.value || null,
+    trashed: trashedFilter.value || null,
   });
   loadPage(1, true);
 }
 
+async function handleRestore(tax) {
+  if (!tax?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.restore(tax.id);
+    if (!result.error) {
+      showSnackbar(t("tax.restored"), 200);
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
 function openCreate() {
   editingTax.value = null;
+  dialogMode.value = "create";
   dialogOpen.value = true;
 }
 
 function openEdit(tax) {
   editingTax.value = tax;
+  dialogMode.value = "edit";
   dialogOpen.value = true;
+}
+
+function openCreateVersion(tax) {
+  editingTax.value = tax;
+  dialogMode.value = "version";
+  dialogOpen.value = true;
+}
+
+function openHistory(tax) {
+  historyTax.value = tax;
+  historyOpen.value = true;
 }
 
 async function handleSubmit({ payload, applyServerErrors }) {
   actionLoading.value = true;
 
   try {
-    if (editingTax.value?.id) {
+    if (dialogMode.value === "version" && editingTax.value?.id) {
+      const { error } = await store.createVersion(
+        editingTax.value.id,
+        payload,
+      );
+
+      if (error) {
+        applyServerErrors(error.errors);
+        return;
+      }
+
+      showSnackbar(t("tax.versionCreated"), 200);
+      dialogOpen.value = false;
+      return;
+    }
+
+    if (dialogMode.value === "edit" && editingTax.value?.id) {
       const { error } = await store.update(editingTax.value.id, payload);
 
       if (error) {
@@ -387,6 +543,19 @@ async function handleSubmit({ payload, applyServerErrors }) {
 
     showSnackbar(t("tax.created"), 200);
     dialogOpen.value = false;
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+async function handleApprove(tax) {
+  actionLoading.value = true;
+
+  try {
+    const result = await store.approve(tax.id);
+    if (!result.error) {
+      showSnackbar(t("tax.approved"), 200);
+    }
   } finally {
     actionLoading.value = false;
   }
@@ -434,11 +603,35 @@ async function handleDelete() {
   }
 }
 
+function confirmForceDelete(tax) {
+  forceDeletingTax.value = tax;
+  forceDeleteDialogOpen.value = true;
+}
+
+async function handleForceDelete() {
+  if (!forceDeletingTax.value?.id) return;
+
+  actionLoading.value = true;
+
+  try {
+    const result = await store.forceDestroy(forceDeletingTax.value.id);
+
+    if (!result.error) {
+      showSnackbar(t("common.permanentlyDeleted"), 200);
+      forceDeleteDialogOpen.value = false;
+      forceDeletingTax.value = null;
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
 onMounted(() => {
   search.value = store.filters.search || "";
   status.value = store.filters.status || null;
   type.value = store.filters.type || null;
   scope.value = store.filters.scope || null;
+  trashedFilter.value = store.filters.trashed || null;
   loadPage(store.meta.current_page || 1);
 });
 </script>

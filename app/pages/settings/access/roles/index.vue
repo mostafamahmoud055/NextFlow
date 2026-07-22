@@ -11,7 +11,7 @@
       </div>
 
       <v-btn
-        v-if="canCreate"
+        v-if="canCreate && !showDeleted"
         color="primary"
         class="text-none"
         prepend-icon="mdi-plus"
@@ -26,7 +26,7 @@
         <v-col cols="12" md="5">
           <ListSearchField v-model="search" @search="applyFilters" />
         </v-col>
-        <v-col cols="12" sm="6" md="4">
+        <v-col cols="12" sm="6" md="3">
           <v-select
             v-model="isActive"
             :items="statusItems"
@@ -39,7 +39,19 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" sm="6" md="3" class="d-flex justify-end">
+        <v-col cols="12" sm="6" md="2">
+          <v-select
+            v-model="trashedFilter"
+            :items="trashedItems"
+            item-title="title"
+            item-value="value"
+            :label="t('common.showDeleted')"
+            variant="outlined"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </v-col>
+        <v-col cols="12" sm="6" md="2" class="d-flex justify-end">
           <v-btn
             variant="tonal"
             class="text-none"
@@ -126,70 +138,89 @@
                   </template>
 
                   <v-list density="compact" min-width="220">
-                    <v-list-item
-                      v-if="canView"
-                      prepend-icon="mdi-eye-outline"
-                      :title="t('role.view')"
-                      :disabled="actionLoading"
-                      @click="openView(role)"
-                    />
-                    <v-list-item
-                      v-if="canUpdate"
-                      prepend-icon="mdi-pencil-outline"
-                      :title="t('buttons.edit')"
-                      :disabled="actionLoading"
-                      @click="openEdit(role)"
-                    />
-                    <v-list-item
-                      v-if="canAssignPermissions && isRoleActive(role)"
-                      prepend-icon="mdi-shield-key-outline"
-                      :title="t('role.assignPermissions')"
-                      :disabled="actionLoading"
-                      @click="openAssignPermissions(role)"
-                    />
-                    <v-list-item
-                      v-if="canAssignUsers && isRoleActive(role)"
-                      prepend-icon="mdi-account-multiple-plus-outline"
-                      :title="t('role.assignUsers')"
-                      :disabled="actionLoading"
-                      @click="openAssignUsers(role)"
-                    />
-                    <v-list-item
-                      v-if="canCreate"
-                      prepend-icon="mdi-content-copy"
-                      :title="t('role.clone')"
-                      :disabled="actionLoading"
-                      @click="openClone(role)"
-                    />
-                    <v-list-item
-                      v-if="canView"
-                      prepend-icon="mdi-account-group-outline"
-                      :title="t('role.viewUsage')"
-                      :disabled="actionLoading"
-                      @click="openUsage(role)"
-                    />
-                    <!-- <v-list-item
-                      v-if="canActivate && !isRoleActive(role)"
-                      prepend-icon="mdi-check-circle-outline"
-                      :title="t('role.activate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(role, true)"
-                    />
-                    <v-list-item
-                      v-if="canDeactivate && isRoleActive(role)"
-                      prepend-icon="mdi-cancel"
-                      :title="t('role.deactivate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(role, false)"
-                    /> -->
-                    <v-list-item
-                      v-if="canDelete"
-                      prepend-icon="mdi-delete-outline"
-                      :title="t('buttons.delete')"
-                      class="text-error"
-                      :disabled="actionLoading"
-                      @click="confirmDelete(role)"
-                    />
+                    <template v-if="!showDeleted">
+                      <v-list-item
+                        v-if="canView"
+                        prepend-icon="mdi-eye-outline"
+                        :title="t('role.view')"
+                        :disabled="actionLoading"
+                        @click="openView(role)"
+                      />
+                      <v-list-item
+                        v-if="canUpdate"
+                        prepend-icon="mdi-pencil-outline"
+                        :title="t('buttons.edit')"
+                        :disabled="actionLoading"
+                        @click="openEdit(role)"
+                      />
+                      <v-list-item
+                        v-if="canAssignPermissions && isRoleActive(role)"
+                        prepend-icon="mdi-shield-key-outline"
+                        :title="t('role.assignPermissions')"
+                        :disabled="actionLoading"
+                        @click="openAssignPermissions(role)"
+                      />
+                      <v-list-item
+                        v-if="canAssignUsers && isRoleActive(role)"
+                        prepend-icon="mdi-account-multiple-plus-outline"
+                        :title="t('role.assignUsers')"
+                        :disabled="actionLoading"
+                        @click="openAssignUsers(role)"
+                      />
+                      <v-list-item
+                        v-if="canCreate"
+                        prepend-icon="mdi-content-copy"
+                        :title="t('role.clone')"
+                        :disabled="actionLoading"
+                        @click="openClone(role)"
+                      />
+                      <v-list-item
+                        v-if="canView"
+                        prepend-icon="mdi-account-group-outline"
+                        :title="t('role.viewUsage')"
+                        :disabled="actionLoading"
+                        @click="openUsage(role)"
+                      />
+                      <!-- <v-list-item
+                        v-if="canActivate && !isRoleActive(role)"
+                        prepend-icon="mdi-check-circle-outline"
+                        :title="t('role.activate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(role, true)"
+                      />
+                      <v-list-item
+                        v-if="canDeactivate && isRoleActive(role)"
+                        prepend-icon="mdi-cancel"
+                        :title="t('role.deactivate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(role, false)"
+                      /> -->
+                      <v-list-item
+                        v-if="canDelete"
+                        prepend-icon="mdi-delete-outline"
+                        :title="t('buttons.delete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmDelete(role)"
+                      />
+                    </template>
+                    <template v-else>
+                      <v-list-item
+                        v-if="canRestore"
+                        prepend-icon="mdi-delete-restore"
+                        :title="t('buttons.restore')"
+                        :disabled="actionLoading"
+                        @click="handleRestore(role)"
+                      />
+                      <v-list-item
+                        v-if="canForceDelete"
+                        prepend-icon="mdi-delete-forever-outline"
+                        :title="t('buttons.permanentDelete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmForceDelete(role)"
+                      />
+                    </template>
                   </v-list>
                 </v-menu>
               </td>
@@ -241,6 +272,22 @@
               <div>{{ viewingRole.role_code || '—' }}</div>
             </div>
             <div class="mb-3">
+              <div class="text-caption text-medium-emphasis">{{ t('role.branchScope') }}</div>
+              <div class="d-flex flex-wrap ga-1 mt-1">
+                <v-chip
+                  v-for="branchId in viewingRole.branch_scope || []"
+                  :key="branchId"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ branchLabel(branchId) }}
+                </v-chip>
+                <span v-if="!(viewingRole.branch_scope || []).length">
+                  {{ t('role.branchScopeAll') }}
+                </span>
+              </div>
+            </div>
+            <div class="mb-3">
               <div class="text-caption text-medium-emphasis">{{ t('role.description') }}</div>
               <div>{{ viewingRole.description || '—' }}</div>
             </div>
@@ -269,7 +316,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="cloneOpen" max-width="480">
+    <v-dialog v-model="cloneOpen" max-width="560">
       <v-card rounded="xl" class="pa-2">
         <v-card-title class="text-h6 font-weight-bold">
           {{ t('role.cloneTitle') }}
@@ -294,6 +341,23 @@
             :label="t('role.nameAr')"
             :error-messages="cloneErrors.name_ar"
             class="mb-2"
+            hide-details="auto"
+          />
+          <v-select
+            v-model="cloneForm.branch_scope"
+            :items="branchItems"
+            item-title="title"
+            item-value="value"
+            :label="t('role.branchScope')"
+            :loading="branchesLoading"
+            :error-messages="cloneErrors.branch_scope"
+            :hint="t('role.branchScopeHint')"
+            persistent-hint
+            multiple
+            chips
+            closable-chips
+            clearable
+            variant="outlined"
             hide-details="auto"
           />
         </v-card-text>
@@ -495,6 +559,31 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="forceDeleteDialogOpen" max-width="440">
+      <v-card rounded="xl" class="pa-2">
+        <v-card-title class="text-h6 font-weight-bold">
+          {{ t('common.permanentDeleteTitle') }}
+        </v-card-title>
+        <v-card-text class="text-medium-emphasis">
+          {{ t('common.permanentDeleteConfirm', { name: forceDeleteTargetName }) }}
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" class="text-none" @click="forceDeleteDialogOpen = false">
+            {{ t('buttons.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            class="text-none"
+            :loading="actionLoading"
+            @click="handleForceDelete"
+          >
+            {{ t('buttons.permanentDelete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -502,6 +591,7 @@
 import RoleFormDialog from "~/components/role/RoleFormDialog.vue";
 import { ROLE_STATUSES, roleDisplayName } from "~/utils/roleConstants";
 import { permissionDisplayName } from "~/utils/permissionConstants";
+import { branchDisplayName } from "~/utils/branchConstants";
 import { useSnackbar } from "~/composables/useSnackbar";
 
 definePageMeta({
@@ -514,6 +604,7 @@ const { hasPermission } = usePermissions();
 const { showSnackbar } = useSnackbar();
 const store = useRolesStore();
 const permissionsStore = usePermissionsStore();
+const branchesStore = useBranchesStore();
 
 useHead({
   title: () => t("navigation.rolesManagement"),
@@ -523,6 +614,8 @@ const canView = computed(() => hasPermission("roles.view"));
 const canCreate = computed(() => hasPermission("roles.create"));
 const canUpdate = computed(() => hasPermission("roles.update"));
 const canDelete = computed(() => hasPermission("roles.delete"));
+const canRestore = computed(() => hasPermission("roles.restore"));
+const canForceDelete = computed(() => hasPermission("roles.force_delete"));
 const canActivate = computed(() => hasPermission("roles.activate"));
 const canDeactivate = computed(() => hasPermission("roles.deactivate"));
 const canAssignPermissions = computed(() =>
@@ -530,8 +623,11 @@ const canAssignPermissions = computed(() =>
 );
 const canAssignUsers = computed(() => hasPermission("roles.assign_users"));
 
+const showDeleted = computed(() => store.filters.trashed === "only");
+
 const search = ref("");
 const isActive = ref(null);
+const trashedFilter = ref(null);
 const page = ref(1);
 const actionLoading = ref(false);
 const permissionsLoading = ref(false);
@@ -546,8 +642,15 @@ const viewingRole = ref(null);
 
 const cloneOpen = ref(false);
 const cloningRole = ref(null);
-const cloneForm = reactive({ name: "", name_en: "", name_ar: "" });
+const cloneForm = reactive({
+  name: "",
+  name_en: "",
+  name_ar: "",
+  branch_scope: [],
+});
 const cloneErrors = reactive({});
+const branchesLoading = ref(false);
+const branchOptions = ref([]);
 
 const permissionsOpen = ref(false);
 const selectedPermissions = ref([]);
@@ -564,10 +667,16 @@ const usageCount = ref(0);
 
 const deleteOpen = ref(false);
 const deletingRole = ref(null);
+const forceDeleteDialogOpen = ref(false);
+const forceDeletingRole = ref(null);
 const activeRole = ref(null);
 
 const deleteTargetName = computed(() =>
   deletingRole.value ? displayName(deletingRole.value) : "",
+);
+
+const forceDeleteTargetName = computed(() =>
+  forceDeletingRole.value ? displayName(forceDeletingRole.value) : "",
 );
 
 const statusItems = computed(() =>
@@ -577,10 +686,22 @@ const statusItems = computed(() =>
   })),
 );
 
+const trashedItems = computed(() => [
+  { value: null, title: t("common.showDeletedAll") },
+  { value: "only", title: t("common.showDeletedOnly") },
+]);
+
 const userItems = computed(() =>
   store.userOptions.map((user) => ({
     value: user.id,
     title: user.name ? `${user.name} (${user.email})` : user.email,
+  })),
+);
+
+const branchItems = computed(() =>
+  branchOptions.value.map((branch) => ({
+    value: branch.id,
+    title: branchDisplayName(branch, locale.value),
   })),
 );
 
@@ -590,6 +711,12 @@ function displayName(role) {
 
 function permissionLabel(permission) {
   return permissionDisplayName(permission, locale.value);
+}
+
+function branchLabel(branchId) {
+  const branch = branchOptions.value.find((item) => item.id === branchId);
+  if (branch) return branchDisplayName(branch, locale.value);
+  return `#${branchId}`;
 }
 
 function isRoleActive(role) {
@@ -612,6 +739,16 @@ async function ensurePermissionGroups() {
   }
 }
 
+async function ensureBranches() {
+  branchesLoading.value = true;
+  try {
+    const { items, error } = await branchesStore.fetchAll();
+    branchOptions.value = error ? [] : items || [];
+  } finally {
+    branchesLoading.value = false;
+  }
+}
+
 async function loadPage(nextPage = page.value, force = false) {
   const target = Number(nextPage) || 1;
   page.value = target;
@@ -626,8 +763,23 @@ function applyFilters() {
       isActive.value === null || isActive.value === undefined
         ? null
         : isActive.value,
+    trashed: trashedFilter.value || null,
   });
   loadPage(1, true);
+}
+
+async function handleRestore(role) {
+  if (!role?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.restore(role.id);
+    if (!result.error) {
+      showSnackbar(t("role.restored"), 200);
+    }
+  } finally {
+    actionLoading.value = false;
+  }
 }
 
 async function openCreate() {
@@ -653,6 +805,7 @@ async function openView(role) {
   viewOpen.value = true;
   viewLoading.value = true;
   try {
+    await ensureBranches();
     const { role: fresh } = await store.fetchOne(role.id);
     if (fresh) viewingRole.value = fresh;
   } finally {
@@ -685,13 +838,17 @@ async function handleFormSubmit({ payload, applyServerErrors }) {
   }
 }
 
-function openClone(role) {
+async function openClone(role) {
   cloningRole.value = role;
   Object.keys(cloneErrors).forEach((key) => delete cloneErrors[key]);
   cloneForm.name = role.name ? `${role.name} (Copy)` : "";
   cloneForm.name_en = role.name_en ? `${role.name_en} (Copy)` : "";
   cloneForm.name_ar = role.name_ar ? `${role.name_ar} (نسخة)` : "";
+  cloneForm.branch_scope = Array.isArray(role.branch_scope)
+    ? role.branch_scope.map((id) => Number(id)).filter(Boolean)
+    : [];
   cloneOpen.value = true;
+  await ensureBranches();
 }
 
 async function handleClone() {
@@ -699,10 +856,20 @@ async function handleClone() {
 
   Object.keys(cloneErrors).forEach((key) => delete cloneErrors[key]);
 
-  const payload = {};
+  const branchScope = Array.isArray(cloneForm.branch_scope)
+    ? cloneForm.branch_scope.map((id) => Number(id)).filter(Boolean)
+    : [];
+
+  const payload = {
+    branch_scope: branchScope,
+  };
   if (cloneForm.name?.trim()) payload.name = cloneForm.name.trim();
   if (cloneForm.name_en?.trim()) payload.name_en = cloneForm.name_en.trim();
   if (cloneForm.name_ar?.trim()) payload.name_ar = cloneForm.name_ar.trim();
+  if (branchScope.length) {
+    const tenantId = useCookie("nf_tenant").value?.id;
+    if (tenantId) payload.tenant_id = tenantId;
+  }
 
   const { error } = await store.clone(cloningRole.value.id, payload);
   if (error) {
@@ -845,9 +1012,30 @@ async function handleDelete() {
   }
 }
 
+function confirmForceDelete(role) {
+  forceDeletingRole.value = role;
+  forceDeleteDialogOpen.value = true;
+}
+
+async function handleForceDelete() {
+  if (!forceDeletingRole.value?.id) return;
+  actionLoading.value = true;
+  try {
+    const { error } = await store.forceDestroy(forceDeletingRole.value.id);
+    if (!error) {
+      showSnackbar(t("common.permanentlyDeleted"), 200);
+      forceDeleteDialogOpen.value = false;
+      forceDeletingRole.value = null;
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
 onMounted(() => {
   search.value = store.filters.search || "";
   isActive.value = store.filters.is_active;
+  trashedFilter.value = store.filters.trashed || null;
   if (canView.value) loadPage(store.meta.current_page || 1);
 });
 </script>

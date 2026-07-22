@@ -85,7 +85,15 @@ export const navigationItems = [
       {
         titleKey: "navigation.branchManagement",
         to: "/settings/company/branches",
-        permission: "branches.view",
+        permission: [
+          "branches.view",
+          "branches.create",
+          "branches.update",
+          "branches.activate",
+          "branches.deactivate",
+          "branches.delete",
+          "branches.assign_employees",
+        ],
       },
       {
         titleKey: "navigation.departmentsManagement",
@@ -108,21 +116,40 @@ export const navigationItems = [
         to: "/settings/company/fiscal-years",
         permission: "fiscal_years.view",
       },
-      { titleKey: "navigation.accountingPeriodsManagement", to: "/settings/financial/accounting-periods" },
+      {
+        titleKey: "navigation.accountingPeriodsManagement",
+        to: "/settings/financial/accounting-periods",
+        permission: "accounting_periods.view",
+      },
       {
         titleKey: "navigation.currencyManagement",
         to: "/settings/financial/currencies",
         permission: "currencies.view",
       },
-      { titleKey: "navigation.exchangeRatesManagement", to: "/settings/financial/exchange-rates" },
+      {
+        titleKey: "navigation.exchangeRatesManagement",
+        to: "/settings/financial/exchange-rates",
+        permission: "exchange_rates.view",
+      },
       {
         titleKey: "navigation.taxManagement",
         to: "/settings/financial/taxes",
         permission: "taxes.view",
       },
       { titleKey: "navigation.paymentTerms", to: "/settings/financial/payment-terms" },
-      { titleKey: "navigation.costCentersManagement", to: "/settings/financial/cost-centers" },
-      { titleKey: "navigation.profitCentersManagement", to: "/settings/financial/profit-centers" },
+      {
+        titleKey: "navigation.costCentersManagement",
+        to: "/settings/financial/cost-centers",
+        permission: "cost_centers.view",
+      },
+      {
+        titleKey: "navigation.profitCentersManagement",
+        to: "/settings/financial/profit-centers",
+        permission: [
+          "profit_centers.view",
+          "profit_centers.view_tree",
+        ],
+      },
       { titleKey: "navigation.documentNumbering", to: "/settings/financial/document-numbering" },
     ],
   },

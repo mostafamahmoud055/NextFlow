@@ -11,7 +11,7 @@
       </div>
 
       <v-btn
-        v-if="canCreateAndDelete"
+        v-if="canCreateAndDelete && !showDeleted"
         color="primary"
         class="text-none"
         prepend-icon="mdi-plus"
@@ -26,7 +26,7 @@
         <v-col cols="12" md="6">
           <ListSearchField v-model="search" @search="applyFilters" />
         </v-col>
-        <v-col cols="12" sm="6" md="3">
+        <v-col cols="12" sm="6" md="2">
           <v-select
             v-model="status"
             :items="statusItems"
@@ -39,7 +39,19 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" sm="6" md="3" class="d-flex justify-end">
+        <v-col cols="12" sm="6" md="2">
+          <v-select
+            v-model="trashedFilter"
+            :items="trashedItems"
+            item-title="title"
+            item-value="value"
+            :label="t('common.showDeleted')"
+            variant="outlined"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </v-col>
+        <v-col cols="12" sm="6" md="2" class="d-flex justify-end">
           <v-btn
             variant="tonal"
             class="text-none"
@@ -123,36 +135,55 @@
                   </template>
 
                   <v-list density="compact" min-width="200">
-                    <v-list-item
-                      v-if="canManage"
-                      prepend-icon="mdi-pencil-outline"
-                      :title="t('buttons.edit')"
-                      :disabled="actionLoading"
-                      @click="openEdit(company)"
-                    />
-                    <v-list-item
-                      v-if="canManage && !isActive(company)"
-                      prepend-icon="mdi-check-circle-outline"
-                      :title="t('company.activate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(company, true)"
-                    />
-                    <v-list-item
-                      v-if="canManage && isActive(company)"
-                      prepend-icon="mdi-cancel"
-                      :title="t('company.deactivate')"
-                      :disabled="actionLoading"
-                      @click="toggleStatus(company, false)"
-                    />
+                    <template v-if="!showDeleted">
+                      <v-list-item
+                        v-if="canManage"
+                        prepend-icon="mdi-pencil-outline"
+                        :title="t('buttons.edit')"
+                        :disabled="actionLoading"
+                        @click="openEdit(company)"
+                      />
+                      <v-list-item
+                        v-if="canManage && !isActive(company)"
+                        prepend-icon="mdi-check-circle-outline"
+                        :title="t('company.activate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(company, true)"
+                      />
+                      <v-list-item
+                        v-if="canManage && isActive(company)"
+                        prepend-icon="mdi-cancel"
+                        :title="t('company.deactivate')"
+                        :disabled="actionLoading"
+                        @click="toggleStatus(company, false)"
+                      />
 
-                    <v-list-item
-                      v-if="canCreateAndDelete"
-                      prepend-icon="mdi-delete-outline"
-                      :title="t('buttons.delete')"
-                      class="text-error"
-                      :disabled="actionLoading"
-                      @click="confirmDelete(company)"
-                    />
+                      <v-list-item
+                        v-if="canCreateAndDelete"
+                        prepend-icon="mdi-delete-outline"
+                        :title="t('buttons.delete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmDelete(company)"
+                      />
+                    </template>
+                    <template v-else>
+                      <v-list-item
+                        v-if="canRestore"
+                        prepend-icon="mdi-delete-restore"
+                        :title="t('buttons.restore')"
+                        :disabled="actionLoading"
+                        @click="handleRestore(company)"
+                      />
+                      <v-list-item
+                        v-if="canForceDelete"
+                        prepend-icon="mdi-delete-forever-outline"
+                        :title="t('buttons.permanentDelete')"
+                        class="text-error"
+                        :disabled="actionLoading"
+                        @click="confirmForceDelete(company)"
+                      />
+                    </template>
                   </v-list>
                 </v-menu>
               </td>
@@ -207,6 +238,31 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="forceDeleteDialogOpen" max-width="440">
+      <v-card rounded="xl" class="pa-2">
+        <v-card-title class="text-h6 font-weight-bold">
+          {{ t('common.permanentDeleteTitle') }}
+        </v-card-title>
+        <v-card-text class="text-medium-emphasis">
+          {{ t('common.permanentDeleteConfirm', { name: forceDeleteTargetName }) }}
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" class="text-none" @click="forceDeleteDialogOpen = false">
+            {{ t('buttons.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            class="text-none"
+            :loading="actionLoading"
+            @click="handleForceDelete"
+          >
+            {{ t('buttons.permanentDelete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -236,18 +292,29 @@ useHead({
 
 const canCreateAndDelete = computed(() => hasRole("admin"));
 const canManage = computed(() => hasPermission("companies.manage"));
+const canRestore = computed(() => hasPermission("companies.restore"));
+const canForceDelete = computed(() => hasPermission("companies.force_delete"));
+
+const showDeleted = computed(() => store.filters.trashed === "only");
 
 const search = ref("");
 const status = ref(null);
+const trashedFilter = ref(null);
 const page = ref(1);
 const dialogOpen = ref(false);
 const editingCompany = ref(null);
 const actionLoading = ref(false);
 const deleteDialogOpen = ref(false);
 const deletingCompany = ref(null);
+const forceDeleteDialogOpen = ref(false);
+const forceDeletingCompany = ref(null);
 
 const deleteTargetName = computed(() =>
   deletingCompany.value ? displayName(deletingCompany.value) : "",
+);
+
+const forceDeleteTargetName = computed(() =>
+  forceDeletingCompany.value ? displayName(forceDeletingCompany.value) : "",
 );
 
 const statusItems = computed(() =>
@@ -256,6 +323,11 @@ const statusItems = computed(() =>
     title: t(item.labelKey),
   })),
 );
+
+const trashedItems = computed(() => [
+  { value: null, title: t("common.showDeletedAll") },
+  { value: "only", title: t("common.showDeletedOnly") },
+]);
 
 function displayName(company) {
   return companyDisplayName(company, locale.value);
@@ -286,8 +358,23 @@ function applyFilters() {
   store.setFilters({
     search: search.value?.trim() || "",
     status: status.value || null,
+    trashed: trashedFilter.value || null,
   });
   loadPage(1, true);
+}
+
+async function handleRestore(company) {
+  if (!company?.uuid) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.restore(company.uuid);
+    if (!result.error) {
+      showSnackbar(t("company.restored"), 200);
+    }
+  } finally {
+    actionLoading.value = false;
+  }
 }
 
 function openCreate() {
@@ -377,9 +464,33 @@ async function handleDelete() {
   }
 }
 
+function confirmForceDelete(company) {
+  forceDeletingCompany.value = company;
+  forceDeleteDialogOpen.value = true;
+}
+
+async function handleForceDelete() {
+  if (!forceDeletingCompany.value?.uuid) return;
+
+  actionLoading.value = true;
+
+  try {
+    const result = await store.forceDestroy(forceDeletingCompany.value.uuid);
+
+    if (!result.error) {
+      showSnackbar(t("common.permanentlyDeleted"), 200);
+      forceDeleteDialogOpen.value = false;
+      forceDeletingCompany.value = null;
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
 onMounted(() => {
   search.value = store.filters.search || "";
   status.value = store.filters.status || null;
+  trashedFilter.value = store.filters.trashed || null;
   loadPage(store.meta.current_page || 1);
 });
 </script>

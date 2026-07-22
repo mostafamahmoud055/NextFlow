@@ -23,7 +23,7 @@
             {{ t('department.listView') }}
           </v-btn>
           <v-btn
-            v-if="canViewTree"
+            v-if="canViewTree && !showDeleted"
             value="tree"
             class="text-none"
             prepend-icon="mdi-file-tree-outline"
@@ -33,7 +33,7 @@
         </v-btn-toggle>
 
         <v-btn
-          v-if="canCreate"
+          v-if="canCreate && !showDeleted"
           color="primary"
           class="text-none"
           prepend-icon="mdi-plus"
@@ -88,7 +88,19 @@
             @update:model-value="applyFilters"
           />
         </v-col>
-        <v-col cols="12" sm="6" md="2" class="d-flex justify-end">
+        <v-col cols="12" sm="6" md="2">
+          <v-select
+            v-model="trashedFilter"
+            :items="trashedItems"
+            item-title="title"
+            item-value="value"
+            :label="t('common.showDeleted')"
+            variant="outlined"
+            hide-details
+            @update:model-value="applyFilters"
+          />
+        </v-col>
+        <v-col cols="12" sm="6" md="1" class="d-flex justify-end">
           <v-btn
             variant="tonal"
             class="text-none"
@@ -123,6 +135,8 @@
                 <th class="d-none d-md-table-cell">{{ t('department.code') }}</th>
                 <th class="d-none d-lg-table-cell">{{ t('department.parent') }}</th>
                 <th class="d-none d-lg-table-cell">{{ t('department.branch') }}</th>
+                <th class="d-none d-lg-table-cell">{{ t('department.manager') }}</th>
+                <th class="d-none d-lg-table-cell">{{ t('department.employees') }}</th>
                 <th>{{ t('department.status') }}</th>
                 <th class="text-end">{{ t('department.actions') }}</th>
               </tr>
@@ -142,6 +156,12 @@
                 </td>
                 <td class="d-none d-lg-table-cell text-medium-emphasis">
                   {{ branchLabel(department) }}
+                </td>
+                <td class="d-none d-lg-table-cell text-medium-emphasis">
+                  {{ managerLabel(department) }}
+                </td>
+                <td class="d-none d-lg-table-cell text-medium-emphasis">
+                  {{ employeesCountLabel(department) }}
                 </td>
                 <td>
                   <v-chip
@@ -167,35 +187,61 @@
                     </template>
 
                     <v-list density="compact" min-width="200">
-                      <v-list-item
-                        v-if="canUpdate"
-                        prepend-icon="mdi-pencil-outline"
-                        :title="t('buttons.edit')"
-                        :disabled="actionLoading"
-                        @click="openEdit(department)"
-                      />
-                      <v-list-item
-                        v-if="canActivate && !isActive(department)"
-                        prepend-icon="mdi-check-circle-outline"
-                        :title="t('department.activate')"
-                        :disabled="actionLoading"
-                        @click="toggleStatus(department, true)"
-                      />
-                      <v-list-item
-                        v-if="canDeactivate && isActive(department)"
-                        prepend-icon="mdi-cancel"
-                        :title="t('department.deactivate')"
-                        :disabled="actionLoading"
-                        @click="toggleStatus(department, false)"
-                      />
-                      <v-list-item
-                        v-if="canDelete"
-                        prepend-icon="mdi-delete-outline"
-                        :title="t('buttons.delete')"
-                        class="text-error"
-                        :disabled="actionLoading"
-                        @click="confirmDelete(department)"
-                      />
+                      <template v-if="!showDeleted">
+                        <v-list-item
+                          v-if="canUpdate && canAccessBranch(department.branch_id)"
+                          prepend-icon="mdi-pencil-outline"
+                          :title="t('buttons.edit')"
+                          :disabled="actionLoading"
+                          @click="openEdit(department)"
+                        />
+                        <v-list-item
+                          v-if="canAssignEmployees && canAccessBranch(department.branch_id)"
+                          prepend-icon="mdi-account-multiple-outline"
+                          :title="t('department.assignEmployees')"
+                          :disabled="actionLoading || !isActive(department)"
+                          @click="openAssignEmployees(department)"
+                        />
+                        <v-list-item
+                          v-if="canActivate && canAccessBranch(department.branch_id) && !isActive(department)"
+                          prepend-icon="mdi-check-circle-outline"
+                          :title="t('department.activate')"
+                          :disabled="actionLoading"
+                          @click="toggleStatus(department, true)"
+                        />
+                        <v-list-item
+                          v-if="canDeactivate && canAccessBranch(department.branch_id) && isActive(department)"
+                          prepend-icon="mdi-cancel"
+                          :title="t('department.deactivate')"
+                          :disabled="actionLoading"
+                          @click="toggleStatus(department, false)"
+                        />
+                        <v-list-item
+                          v-if="canDelete && canAccessBranch(department.branch_id)"
+                          prepend-icon="mdi-delete-outline"
+                          :title="t('buttons.delete')"
+                          class="text-error"
+                          :disabled="actionLoading"
+                          @click="confirmDelete(department)"
+                        />
+                      </template>
+                      <template v-else>
+                        <v-list-item
+                          v-if="canRestore && canAccessBranch(department.branch_id)"
+                          prepend-icon="mdi-delete-restore"
+                          :title="t('buttons.restore')"
+                          :disabled="actionLoading"
+                          @click="handleRestore(department)"
+                        />
+                        <v-list-item
+                          v-if="canForceDelete && canAccessBranch(department.branch_id)"
+                          prepend-icon="mdi-delete-forever-outline"
+                          :title="t('buttons.permanentDelete')"
+                          class="text-error"
+                          :disabled="actionLoading"
+                          @click="confirmForceDelete(department)"
+                        />
+                      </template>
                     </v-list>
                   </v-menu>
                 </td>
@@ -237,11 +283,13 @@
             :nodes="store.treeItems"
             :depth="0"
             :can-update="canUpdate"
+            :can-assign-employees="canAssignEmployees"
             :can-activate="canActivate"
             :can-deactivate="canDeactivate"
             :can-delete="canDelete"
             :action-loading="actionLoading"
             @edit="openEdit"
+            @assign-employees="openAssignEmployees"
             @activate="(dept) => toggleStatus(dept, true)"
             @deactivate="(dept) => toggleStatus(dept, false)"
             @delete="confirmDelete"
@@ -253,10 +301,15 @@
     <DepartmentFormDialog
       v-model="dialogOpen"
       :department="editingDepartment"
-      :parent-options="store.allItems"
-      :branch-options="branchesStore.allItems"
       :saving="store.saving || actionLoading"
       @submit="handleSubmit"
+    />
+
+    <DepartmentAssignEmployeesDialog
+      v-model="assignEmployeesOpen"
+      :department="assigningDepartment"
+      :saving="store.saving || actionLoading"
+      @submit="handleAssignEmployees"
     />
 
     <v-dialog v-model="deleteDialogOpen" max-width="440">
@@ -283,10 +336,36 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="forceDeleteDialogOpen" max-width="440">
+      <v-card rounded="xl" class="pa-2">
+        <v-card-title class="text-h6 font-weight-bold">
+          {{ t('common.permanentDeleteTitle') }}
+        </v-card-title>
+        <v-card-text class="text-medium-emphasis">
+          {{ t('common.permanentDeleteConfirm', { name: forceDeleteTargetName }) }}
+        </v-card-text>
+        <v-card-actions class="pa-4 pt-0">
+          <v-spacer />
+          <v-btn variant="text" class="text-none" @click="forceDeleteDialogOpen = false">
+            {{ t('buttons.cancel') }}
+          </v-btn>
+          <v-btn
+            color="error"
+            class="text-none"
+            :loading="actionLoading"
+            @click="handleForceDelete"
+          >
+            {{ t('buttons.permanentDelete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
+import DepartmentAssignEmployeesDialog from "~/components/department/DepartmentAssignEmployeesDialog.vue";
 import DepartmentFormDialog from "~/components/department/DepartmentFormDialog.vue";
 import DepartmentTreeNodes from "~/components/department/DepartmentTreeNodes.vue";
 import {
@@ -294,6 +373,7 @@ import {
   departmentDisplayName,
 } from "~/utils/departmentConstants";
 import { branchDisplayName } from "~/utils/branchConstants";
+import { userDisplayName } from "~/utils/userConstants";
 import { enumValue } from "~/utils/enumValue";
 import { useSnackbar } from "~/composables/useSnackbar";
 
@@ -303,10 +383,11 @@ definePageMeta({
 });
 
 const { t, locale } = useAppLocale();
-const { hasPermission } = usePermissions();
+const { hasPermission, canAccessBranch } = usePermissions();
 const { showSnackbar } = useSnackbar();
 const store = useDepartmentsStore();
 const branchesStore = useBranchesStore();
+const usersStore = useUsersStore();
 
 useHead({
   title: () => t("navigation.departmentsManagement"),
@@ -315,28 +396,55 @@ useHead({
 const canCreate = computed(() => hasPermission("departments.create"));
 const canUpdate = computed(() => hasPermission("departments.update"));
 const canDelete = computed(() => hasPermission("departments.delete"));
+const canRestore = computed(() => hasPermission("departments.restore"));
+const canForceDelete = computed(() => hasPermission("departments.force_delete"));
 const canActivate = computed(() => hasPermission("departments.activate"));
 const canDeactivate = computed(() => hasPermission("departments.deactivate"));
+const canAssignEmployees = computed(() =>
+  hasPermission("departments.assign_employees"),
+);
 const canViewTree = computed(
   () =>
     hasPermission("departments.view_tree") ||
     hasPermission("departments.view"),
 );
 
+const showDeleted = computed(() => store.filters.trashed === "only");
+
 const viewMode = ref("list");
 const search = ref("");
 const status = ref(null);
 const branchId = ref(null);
 const parentId = ref(null);
+const trashedFilter = ref(null);
 const page = ref(1);
 const dialogOpen = ref(false);
 const editingDepartment = ref(null);
+const assignEmployeesOpen = ref(false);
+const assigningDepartment = ref(null);
 const actionLoading = ref(false);
 const deleteDialogOpen = ref(false);
 const deletingDepartment = ref(null);
+const forceDeleteDialogOpen = ref(false);
+const forceDeletingDepartment = ref(null);
+const allBranches = ref([]);
+const allParents = ref([]);
+const allUsers = ref([]);
+
+const usersById = computed(() => {
+  const map = new Map();
+  for (const user of allUsers.value) {
+    map.set(user.id, user);
+  }
+  return map;
+});
 
 const deleteTargetName = computed(() =>
   deletingDepartment.value ? displayName(deletingDepartment.value) : "",
+);
+
+const forceDeleteTargetName = computed(() =>
+  forceDeletingDepartment.value ? displayName(forceDeletingDepartment.value) : "",
 );
 
 const statusItems = computed(() =>
@@ -347,18 +455,23 @@ const statusItems = computed(() =>
 );
 
 const branchFilterItems = computed(() =>
-  branchesStore.allItems.map((item) => ({
+  allBranches.value.map((item) => ({
     value: item.id,
     title: branchDisplayName(item, locale.value),
   })),
 );
 
 const parentFilterItems = computed(() =>
-  store.allItems.map((item) => ({
+  allParents.value.map((item) => ({
     value: item.id,
     title: departmentDisplayName(item, locale.value),
   })),
 );
+
+const trashedItems = computed(() => [
+  { value: null, title: t("common.showDeletedAll") },
+  { value: "only", title: t("common.showDeletedOnly") },
+]);
 
 function displayName(department) {
   return departmentDisplayName(department, locale.value);
@@ -374,12 +487,27 @@ function statusLabel(department) {
     : t("department.statusInactive");
 }
 
+async function loadBranches() {
+  const { items, error } = await branchesStore.fetchAll();
+  if (!error) allBranches.value = items;
+}
+
+async function loadParents() {
+  const { items, error } = await store.fetchAll();
+  if (!error) allParents.value = items;
+}
+
+async function loadUsers() {
+  const { items, error } = await usersStore.fetchAll();
+  if (!error) allUsers.value = items;
+}
+
 function parentLabel(department) {
   if (department.parent) {
     return departmentDisplayName(department.parent, locale.value);
   }
   if (!department.parent_id) return "Main";
-  const match = store.allItems.find((item) => item.id === department.parent_id);
+  const match = allParents.value.find((item) => item.id === department.parent_id);
   return match ? departmentDisplayName(match, locale.value) : "—";
 }
 
@@ -388,10 +516,25 @@ function branchLabel(department) {
     return branchDisplayName(department.branch, locale.value);
   }
   if (!department.branch_id) return "—";
-  const match = branchesStore.allItems.find(
+  const match = allBranches.value.find(
     (item) => item.id === department.branch_id,
   );
   return match ? branchDisplayName(match, locale.value) : "—";
+}
+
+function managerLabel(department) {
+  if (!department.manager_id) return "—";
+  const user = usersById.value.get(department.manager_id);
+  return user ? userDisplayName(user, locale.value) : "—";
+}
+
+function employeesCountLabel(department) {
+  const count =
+    department.employees_count ??
+    (Array.isArray(department.employee_ids)
+      ? department.employee_ids.length
+      : 0);
+  return String(count);
 }
 
 async function loadPage(nextPage = page.value, force = false) {
@@ -421,7 +564,12 @@ function applyFilters() {
     status: status.value || null,
     branch_id: branchId.value || null,
     parent_id: parentId.value || null,
+    trashed: trashedFilter.value || null,
   });
+
+  if (showDeleted.value && viewMode.value === "tree") {
+    viewMode.value = "list";
+  }
 
   if (viewMode.value === "tree") {
     loadTree();
@@ -438,6 +586,11 @@ function openCreate() {
 function openEdit(department) {
   editingDepartment.value = department;
   dialogOpen.value = true;
+}
+
+function openAssignEmployees(department) {
+  assigningDepartment.value = department;
+  assignEmployeesOpen.value = true;
 }
 
 async function handleSubmit({ payload, applyServerErrors }) {
@@ -467,6 +620,31 @@ async function handleSubmit({ payload, applyServerErrors }) {
 
     showSnackbar(t("department.created"), 200);
     dialogOpen.value = false;
+    if (viewMode.value === "tree") await loadTree();
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+async function handleAssignEmployees({ userIds, applyServerErrors }) {
+  if (!assigningDepartment.value?.id) return;
+
+  actionLoading.value = true;
+
+  try {
+    const { department, error } = await store.assignEmployees(
+      assigningDepartment.value.id,
+      userIds,
+    );
+
+    if (error) {
+      applyServerErrors(error.errors);
+      return;
+    }
+
+    showSnackbar(t("department.employeesAssigned"), 200);
+    assignEmployeesOpen.value = false;
+    assigningDepartment.value = department;
     if (viewMode.value === "tree") await loadTree();
   } finally {
     actionLoading.value = false;
@@ -517,6 +695,44 @@ async function handleDelete() {
   }
 }
 
+function confirmForceDelete(department) {
+  forceDeletingDepartment.value = department;
+  forceDeleteDialogOpen.value = true;
+}
+
+async function handleForceDelete() {
+  if (!forceDeletingDepartment.value?.id) return;
+
+  actionLoading.value = true;
+
+  try {
+    const result = await store.forceDestroy(forceDeletingDepartment.value.id);
+
+    if (!result.error) {
+      showSnackbar(t("common.permanentlyDeleted"), 200);
+      forceDeleteDialogOpen.value = false;
+      forceDeletingDepartment.value = null;
+      if (viewMode.value === "tree") await loadTree();
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
+async function handleRestore(department) {
+  if (!department?.id) return;
+
+  actionLoading.value = true;
+  try {
+    const result = await store.restore(department.id);
+    if (!result.error) {
+      showSnackbar(t("department.restored"), 200);
+    }
+  } finally {
+    actionLoading.value = false;
+  }
+}
+
 watch(viewMode, (mode) => {
   if (mode === "tree") loadTree();
 });
@@ -526,10 +742,17 @@ onMounted(async () => {
   status.value = store.filters.status || null;
   branchId.value = store.filters.branch_id || null;
   parentId.value = store.filters.parent_id || null;
+  trashedFilter.value = store.filters.trashed || null;
+
+  if (showDeleted.value && viewMode.value === "tree") {
+    viewMode.value = "list";
+  }
 
   await Promise.all([
+    loadParents(),
+    loadBranches(),
+    loadUsers(),
     loadPage(store.meta.current_page || 1),
-    branchesStore.fetchList(),
   ]);
 });
 </script>

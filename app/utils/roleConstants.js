@@ -18,6 +18,7 @@ export function emptyRoleForm() {
     name_ar: "",
     role_code: "",
     description: "",
+    branch_scope: [],
     approval_limit_min: null,
     approval_limit_max: null,
     auto_approval_limit: null,
@@ -35,6 +36,9 @@ export function roleToForm(role) {
     name_ar: role.name_ar || "",
     role_code: role.role_code || "",
     description: role.description || "",
+    branch_scope: Array.isArray(role.branch_scope)
+      ? role.branch_scope.map((id) => Number(id)).filter(Boolean)
+      : [],
     approval_limit_min: role.approval_limit_min ?? null,
     approval_limit_max: role.approval_limit_max ?? null,
     auto_approval_limit: role.auto_approval_limit ?? null,

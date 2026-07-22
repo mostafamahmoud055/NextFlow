@@ -54,6 +54,25 @@
               />
             </v-col>
 
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="form.mobile"
+                :label="t('user.mobile')"
+                :error-messages="fieldErrors.mobile"
+                hide-details="auto"
+              />
+            </v-col>
+
+            <v-col cols="12" sm="6">
+              <v-text-field
+                v-model="form.password_expires_at"
+                :label="t('user.passwordExpiry')"
+                type="date"
+                :error-messages="fieldErrors.password_expires_at"
+                hide-details="auto"
+              />
+            </v-col>
+
             <v-col v-if="!isEdit" cols="12">
               <v-text-field
                 v-model="form.password"
@@ -230,11 +249,13 @@ async function submit() {
         name_en: form.name_en,
         name_ar: form.name_ar,
         email: form.email,
+        mobile: form.mobile?.trim() || null,
+        password_expires_at: form.password_expires_at || null,
       }
     : { ...form };
 
   emit("submit", {
-    payload: cleanPayload(payload),
+    payload: isEdit.value ? payload : cleanPayload(payload),
     applyServerErrors,
   });
 }

@@ -8,7 +8,7 @@
     <v-card class="tax-form-card" rounded="xl">
       <v-card-title class="d-flex align-center justify-space-between pa-6 pb-2">
         <span class="text-h6 font-weight-bold">
-          {{ isEdit ? t('tax.editTitle') : t('tax.createTitle') }}
+          {{ dialogTitle }}
         </span>
         <v-btn
           icon
@@ -169,7 +169,7 @@
           :loading="saving"
           @click="submit"
         >
-          {{ isEdit ? t('buttons.save') : t('tax.create') }}
+          {{ submitLabel }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -190,7 +190,13 @@ import {
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   tax: { type: Object, default: null },
+  mode: {
+    type: String,
+    default: "create",
+    validator: (value) => ["create", "edit", "version"].includes(value),
+  },
   saving: { type: Boolean, default: false },
+  canApprove: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue", "submit"]);
@@ -201,7 +207,33 @@ const formRef = ref(null);
 const form = reactive(emptyTaxForm());
 const fieldErrors = reactive({});
 
-const isEdit = computed(() => Boolean(props.tax?.id));
+const isEdit = computed(() => props.mode === "edit");
+const isVersion = computed(() => props.mode === "version");
+
+const dialogTitle = computed(() => {
+  if (props.mode === "version") return t("tax.createVersionTitle");
+  if (props.mode === "edit") return t("tax.editTitle");
+  return t("tax.createTitle");
+});
+
+const submitLabel = computed(() => {
+  if (props.mode === "version") return t("tax.createVersion");
+  if (props.mode === "edit") return t("buttons.save");
+  return t("tax.create");
+});
+
+const statusItems = computed(() => {
+  const items = TAX_STATUSES.map((item) => ({
+    value: item.value,
+    title: t(item.labelKey),
+  }));
+
+  if (isVersion.value && !props.canApprove) {
+    return items.filter((item) => item.value === "inactive");
+  }
+
+  return items;
+});
 
 const typeItems = computed(() =>
   TAX_TYPES.map((item) => ({ value: item.value, title: t(item.labelKey) })),
@@ -217,9 +249,6 @@ const levelItems = computed(() =>
     value: item.value,
     title: t(item.labelKey),
   })),
-);
-const statusItems = computed(() =>
-  TAX_STATUSES.map((item) => ({ value: item.value, title: t(item.labelKey) })),
 );
 
 const requiredRule = (value) => {
@@ -255,6 +284,13 @@ function applyServerErrors(errors) {
 function hydrate() {
   resetErrors();
   Object.assign(form, props.tax ? taxToForm(props.tax) : emptyTaxForm());
+
+  if (isVersion.value) {
+    form.status = "inactive";
+    if (!form.effective_date) {
+      form.effective_date = new Date().toISOString().slice(0, 10);
+    }
+  }
 }
 
 function close() {

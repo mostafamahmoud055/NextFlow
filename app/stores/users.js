@@ -28,12 +28,18 @@ export const useUsersStore = defineStore("users", () => {
   const allLoaded = ref(false);
   const loadedCompanyId = ref(null);
 
+  const optionsItems = ref([]);
+  const optionsLoaded = ref(false);
+  const optionsCompanyId = ref(null);
+  let optionsPromise = null;
+
   const items = ref([]);
   const meta = ref({ current_page: 1, per_page: 15, last_page: 1, total: 0 });
   const filters = ref({
     search: "",
     status: null,
     login_status: null,
+    trashed: null,
     per_page: 15,
   });
   const loading = ref(false);
@@ -48,6 +54,28 @@ export const useUsersStore = defineStore("users", () => {
   });
   const activityLoading = ref(false);
 
+  function clearOptionsCache() {
+    optionsItems.value = [];
+    optionsLoaded.value = false;
+    optionsCompanyId.value = null;
+    optionsPromise = null;
+  }
+
+  function setOptionItem(user) {
+    const i = optionsItems.value.findIndex((u) => u.id === user.id);
+    if (i === -1) {
+      optionsItems.value = [user, ...optionsItems.value];
+    } else {
+      const next = [...optionsItems.value];
+      next[i] = user;
+      optionsItems.value = next;
+    }
+  }
+
+  function removeOptionItem(id) {
+    optionsItems.value = optionsItems.value.filter((u) => u.id !== id);
+  }
+
   function ensureCompanyCache() {
     const companyId = companyNumericId();
     if (loadedCompanyId.value !== companyId) {
@@ -55,6 +83,7 @@ export const useUsersStore = defineStore("users", () => {
       allLoaded.value = false;
       items.value = [];
       loadedCompanyId.value = companyId;
+      clearOptionsCache();
     }
     return companyId;
   }
@@ -71,12 +100,15 @@ export const useUsersStore = defineStore("users", () => {
     const j = allItems.value.findIndex((u) => u.id === user.id);
     if (j === -1) allItems.value.unshift(user);
     else allItems.value[j] = user;
+
+    if (optionsLoaded.value) setOptionItem(user);
   }
 
   function removeItem(id) {
     items.value = items.value.filter((u) => u.id !== id);
     allItems.value = allItems.value.filter((u) => u.id !== id);
     meta.value.total = Math.max(0, meta.value.total - 1);
+    if (optionsLoaded.value) removeOptionItem(id);
   }
 
   async function fetchList(page = 1, force = false) {
@@ -88,7 +120,8 @@ export const useUsersStore = defineStore("users", () => {
     const hasFilters = !!(
       filters.value.search ||
       filters.value.status ||
-      filters.value.login_status
+      filters.value.login_status ||
+      filters.value.trashed
     );
 
     if (!hasFilters && allLoaded.value && !force && page === 1) {
@@ -102,6 +135,7 @@ export const useUsersStore = defineStore("users", () => {
       if (filters.value.search) params.search = filters.value.search;
       if (filters.value.status) params.status = filters.value.status;
       if (filters.value.login_status) params.login_status = filters.value.login_status;
+      if (filters.value.trashed) params.trashed = filters.value.trashed;
 
       const result = await fetchApi("/users", { params });
       if (result.error) {
@@ -124,6 +158,57 @@ export const useUsersStore = defineStore("users", () => {
     } finally {
       loading.value = false;
     }
+  }
+
+  async function fetchAll(force = false) {
+    const companyId = companyNumericId();
+    if (!companyId) {
+      clearOptionsCache();
+      return { items: [], error: noCompanyError() };
+    }
+
+    if (optionsCompanyId.value && optionsCompanyId.value !== companyId) {
+      clearOptionsCache();
+    }
+
+    if (!force && optionsLoaded.value && optionsCompanyId.value === companyId) {
+      return { items: optionsItems.value, error: null };
+    }
+
+    if (!force && optionsPromise) return optionsPromise;
+
+    optionsPromise = (async () => {
+      const collected = [];
+      let page = 1;
+      let lastPage = 1;
+
+      do {
+        const result = await fetchApi("/users", {
+          params: { page, per_page: '*' },
+          silent: true,
+        });
+
+        if (result.error) {
+          return { items: [], error: result.error };
+        }
+
+        const data = unwrap(result.data) || {};
+        const fetched = data.items?.data || data.items || [];
+        collected.push(...fetched);
+        lastPage = Number(data.meta?.last_page) || 1;
+        page += 1;
+      } while (page <= lastPage);
+
+      optionsItems.value = collected;
+      optionsLoaded.value = true;
+      optionsCompanyId.value = companyId;
+
+      return { items: optionsItems.value, error: null };
+    })().finally(() => {
+      optionsPromise = null;
+    });
+
+    return optionsPromise;
   }
 
   async function fetchOne(id, options = {}) {
@@ -174,6 +259,36 @@ export const useUsersStore = defineStore("users", () => {
     saving.value = true;
     try {
       const result = await fetchApi(`/users/${id}`, { method: "DELETE" });
+      if (!result.error) removeItem(id);
+      return { error: result.error };
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function restore(id) {
+    if (!companyNumericId()) return { user: null, error: noCompanyError() };
+
+    const result = await fetchApi(`/users/${id}/restore`, { method: "PATCH" });
+    const user = result.error ? null : unwrap(result.data);
+    if (user) {
+      if (filters.value.trashed === "only") {
+        removeItem(id);
+      } else {
+        setItem(user);
+      }
+    }
+    return { user, error: result.error };
+  }
+
+  async function forceDestroy(id) {
+    if (!companyNumericId()) return { error: noCompanyError() };
+
+    saving.value = true;
+    try {
+      const result = await fetchApi(`/users/${id}/force`, {
+        method: "DELETE",
+      });
       if (!result.error) removeItem(id);
       return { error: result.error };
     } finally {
@@ -271,6 +386,8 @@ export const useUsersStore = defineStore("users", () => {
     items,
     allItems,
     allLoaded,
+    optionsItems,
+    optionsLoaded,
     meta,
     filters,
     loading,
@@ -279,10 +396,13 @@ export const useUsersStore = defineStore("users", () => {
     activityMeta,
     activityLoading,
     fetchList,
+    fetchAll,
     fetchOne,
     create,
     update,
     destroy,
+    restore,
+    forceDestroy,
     activate,
     deactivate,
     lock,

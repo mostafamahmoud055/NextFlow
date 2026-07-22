@@ -29,12 +29,47 @@ export const useRolesStore = defineStore("roles", () => {
 
   const items = ref([]);
   const meta = ref({ current_page: 1, per_page: 15, last_page: 1, total: 0 });
-  const filters = ref({ search: "", is_active: null, per_page: 15 });
+  const filters = ref({ search: "", is_active: null, trashed: null, per_page: 15 });
   const loading = ref(false);
   const saving = ref(false);
 
   const roleOptions = ref([]);
+  const roleOptionsLoaded = ref(false);
+  const roleOptionsCompanyId = ref(null);
+  let roleOptionsPromise = null;
+
   const userOptions = ref([]);
+
+  function clearRoleOptionsCache() {
+    roleOptions.value = [];
+    roleOptionsLoaded.value = false;
+    roleOptionsCompanyId.value = null;
+    roleOptionsPromise = null;
+  }
+
+  function setRoleOptionItem(role) {
+    if (!role?.id) return;
+    const option = {
+      id: role.id,
+      name: role.display_name || role.name,
+      name_ar: role.name_ar,
+      name_en: role.name_en,
+      code: role.role_code ?? role.name,
+      branch_scope: role.branch_scope ?? [],
+    };
+    const i = roleOptions.value.findIndex((r) => r.id === role.id);
+    if (i === -1) {
+      roleOptions.value = [option, ...roleOptions.value];
+    } else {
+      const next = [...roleOptions.value];
+      next[i] = { ...next[i], ...option };
+      roleOptions.value = next;
+    }
+  }
+
+  function removeRoleOptionItem(id) {
+    roleOptions.value = roleOptions.value.filter((r) => r.id !== id);
+  }
 
   function ensureCompanyCache() {
     const companyId = companyNumericId();
@@ -43,7 +78,7 @@ export const useRolesStore = defineStore("roles", () => {
       allLoaded.value = false;
       items.value = [];
       loadedCompanyId.value = companyId;
-      roleOptions.value = [];
+      clearRoleOptionsCache();
       userOptions.value = [];
     }
     return companyId;
@@ -61,12 +96,18 @@ export const useRolesStore = defineStore("roles", () => {
     const j = allItems.value.findIndex((r) => r.id === role.id);
     if (j === -1) allItems.value.unshift(role);
     else allItems.value[j] = role;
+
+    if (roleOptionsLoaded.value) {
+      if (role.is_active === false) removeRoleOptionItem(role.id);
+      else setRoleOptionItem(role);
+    }
   }
 
   function removeItem(id) {
     items.value = items.value.filter((r) => r.id !== id);
     allItems.value = allItems.value.filter((r) => r.id !== id);
     meta.value.total = Math.max(0, meta.value.total - 1);
+    if (roleOptionsLoaded.value) removeRoleOptionItem(id);
   }
 
   async function fetchList(page = 1, force = false) {
@@ -76,7 +117,7 @@ export const useRolesStore = defineStore("roles", () => {
       return { error: noCompanyError() };
     }
 
-    const hasFilters = !!(filters.value.search || filters.value.is_active !== null);
+    const hasFilters = !!(filters.value.search || filters.value.is_active !== null || filters.value.trashed);
 
     if (!hasFilters && allLoaded.value && !force && page === 1) {
       items.value = allItems.value;
@@ -90,6 +131,7 @@ export const useRolesStore = defineStore("roles", () => {
       if (filters.value.is_active !== null && filters.value.is_active !== "") {
         params.is_active = filters.value.is_active;
       }
+      if (filters.value.trashed) params.trashed = filters.value.trashed;
 
       const result = await fetchApi("/roles", { params });
       if (result.error) {
@@ -114,23 +156,46 @@ export const useRolesStore = defineStore("roles", () => {
     }
   }
 
-  async function fetchRoleOptions() {
-    const companyId = ensureCompanyCache();
+  async function fetchRoleOptions(force = false) {
+    const companyId = companyNumericId();
     if (!companyId) {
-      roleOptions.value = [];
-      return { error: noCompanyError() };
+      clearRoleOptionsCache();
+      return { items: [], error: noCompanyError() };
     }
 
-    const result = await fetchApi("/roles/options");
-    if (result.error) {
-      roleOptions.value = [];
-      return result;
+    if (roleOptionsCompanyId.value && roleOptionsCompanyId.value !== companyId) {
+      clearRoleOptionsCache();
     }
-    const data = unwrap(result.data);
-    roleOptions.value = Array.isArray(data)
-      ? data
-      : data?.items?.data || data?.items || [];
-    return result;
+
+    if (
+      !force &&
+      roleOptionsLoaded.value &&
+      roleOptionsCompanyId.value === companyId
+    ) {
+      return { items: roleOptions.value, error: null };
+    }
+
+    if (!force && roleOptionsPromise) return roleOptionsPromise;
+
+    roleOptionsPromise = (async () => {
+      const result = await fetchApi("/roles/options", { silent: true });
+      if (result.error) {
+        return { items: [], error: result.error };
+      }
+
+      const data = unwrap(result.data);
+      roleOptions.value = Array.isArray(data)
+        ? data
+        : data?.items?.data || data?.items || [];
+      roleOptionsLoaded.value = true;
+      roleOptionsCompanyId.value = companyId;
+
+      return { items: roleOptions.value, error: null };
+    })().finally(() => {
+      roleOptionsPromise = null;
+    });
+
+    return roleOptionsPromise;
   }
 
   async function fetchOne(id) {
@@ -184,6 +249,36 @@ export const useRolesStore = defineStore("roles", () => {
     saving.value = true;
     try {
       const result = await fetchApi(`/roles/${id}`, { method: "DELETE" });
+      if (!result.error) removeItem(id);
+      return { error: result.error };
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function restore(id) {
+    if (!companyNumericId()) return { role: null, error: noCompanyError() };
+
+    const result = await fetchApi(`/roles/${id}/restore`, { method: "PATCH" });
+    const role = result.error ? null : unwrap(result.data);
+    if (role) {
+      if (filters.value.trashed === "only") {
+        removeItem(id);
+      } else {
+        setItem(role);
+      }
+    }
+    return { role, error: result.error };
+  }
+
+  async function forceDestroy(id) {
+    if (!companyNumericId()) return { error: noCompanyError() };
+
+    saving.value = true;
+    try {
+      const result = await fetchApi(`/roles/${id}/force`, {
+        method: "DELETE",
+      });
       if (!result.error) removeItem(id);
       return { error: result.error };
     } finally {
@@ -308,6 +403,8 @@ export const useRolesStore = defineStore("roles", () => {
     create,
     update,
     destroy,
+    restore,
+    forceDestroy,
     activate,
     deactivate,
     clone,

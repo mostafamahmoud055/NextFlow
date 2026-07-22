@@ -176,6 +176,9 @@ export const useAuthStore = defineStore("auth", () => {
             company_id: company.id,
             name: companyDisplayName(company),
         };
+
+        // Refresh branch_scope for the selected company.
+        return fetchUser();
     }
 
     function clearTenant() {

@@ -43,6 +43,26 @@
               />
             </v-col>
 
+            <v-col cols="12">
+              <v-select
+                v-model="form.branch_scope"
+                :items="branchItems"
+                item-title="title"
+                item-value="value"
+                :label="t('role.branchScope')"
+                :loading="branchesLoading"
+                :error-messages="fieldErrors.branch_scope"
+                :hint="t('role.branchScopeHint')"
+                persistent-hint
+                multiple
+                chips
+                closable-chips
+                clearable
+                variant="outlined"
+                hide-details="auto"
+              />
+            </v-col>
+
             <v-col cols="12" sm="4">
               <v-text-field
                 v-model.number="form.approval_limit_min"
@@ -137,6 +157,7 @@
 <script setup>
 import { emptyRoleForm, roleToForm } from "~/utils/roleConstants";
 import { permissionDisplayName } from "~/utils/permissionConstants";
+import { branchDisplayName } from "~/utils/branchConstants";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -149,12 +170,22 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 const { t, locale } = useAppLocale();
+const branchesStore = useBranchesStore();
 
 const formRef = ref(null);
 const form = reactive(emptyRoleForm());
 const fieldErrors = reactive({});
+const branchesLoading = ref(false);
+const branchOptions = ref([]);
 
 const isEdit = computed(() => Boolean(props.role?.id));
+
+const branchItems = computed(() =>
+  branchOptions.value.map((branch) => ({
+    value: branch.id,
+    title: branchDisplayName(branch, locale.value),
+  })),
+);
 
 const requiredRule = (value) => {
   if (value == null || String(value).trim() === "") return t("forms.required");
@@ -177,6 +208,10 @@ function selectedCount(perms) {
   return perms.filter((p) => ids.has(p.id)).length;
 }
 
+function currentTenantId() {
+  return useCookie("nf_tenant").value?.id ?? null;
+}
+
 function resetErrors() {
   Object.keys(fieldErrors).forEach((key) => delete fieldErrors[key]);
 }
@@ -187,6 +222,16 @@ function applyServerErrors(errors) {
   Object.entries(errors).forEach(([key, value]) => {
     fieldErrors[key] = Array.isArray(value) ? value : [String(value)];
   });
+}
+
+async function loadBranches() {
+  branchesLoading.value = true;
+  try {
+    const { items, error } = await branchesStore.fetchAll();
+    branchOptions.value = error ? [] : items || [];
+  } finally {
+    branchesLoading.value = false;
+  }
 }
 
 function hydrate() {
@@ -203,7 +248,14 @@ function cleanPayload(payload) {
   Object.entries(payload).forEach(([key, value]) => {
     if (value === null || value === undefined) return;
     if (typeof value === "string" && value.trim() === "") return;
-    if (Array.isArray(value) && !value.length && key !== "permissions") return;
+    if (
+      Array.isArray(value) &&
+      !value.length &&
+      key !== "permissions" &&
+      key !== "branch_scope"
+    ) {
+      return;
+    }
     cleaned[key] = typeof value === "string" ? value.trim() : value;
   });
   return cleaned;
@@ -218,10 +270,20 @@ async function submit() {
     return;
   }
 
+  const branchScope = Array.isArray(form.branch_scope)
+    ? form.branch_scope.map((id) => Number(id)).filter(Boolean)
+    : [];
+
   const payload = {
     ...form,
     name: (form.name_en || form.name_ar || "").trim(),
+    branch_scope: branchScope,
   };
+
+  if (branchScope.length) {
+    const tenantId = currentTenantId();
+    if (tenantId) payload.tenant_id = tenantId;
+  }
 
   if (isEdit.value) {
     delete payload.permissions;
@@ -236,8 +298,10 @@ async function submit() {
 
 watch(
   () => props.modelValue,
-  (open) => {
-    if (open) hydrate();
+  async (open) => {
+    if (!open) return;
+    hydrate();
+    await loadBranches();
   },
 );
 

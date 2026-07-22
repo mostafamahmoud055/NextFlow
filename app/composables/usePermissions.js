@@ -7,6 +7,9 @@ export function usePermissions() {
     () => new Set(permissionsStore.inactiveKeys),
   );
 
+  /** null = all branches; array = limited IDs */
+  const branchScope = computed(() => auth.user?.branch_scope ?? null);
+
   function hasPermission(key) {
     return permissionSet.value.has(key);
   }
@@ -34,6 +37,14 @@ export function usePermissions() {
     return hasAnyPermission(...required);
   }
 
+  function canAccessBranch(branchId) {
+    const scope = branchScope.value;
+    if (scope == null) return true;
+    if (branchId == null || branchId === "") return true;
+    if (!Array.isArray(scope)) return true;
+    return scope.includes(Number(branchId));
+  }
+
   async function ensureInactivePermissions(force = false) {
     return permissionsStore.fetchInactiveKeys(force);
   }
@@ -45,9 +56,11 @@ export function usePermissions() {
   return {
     permissions: computed(() => auth.permissions),
     roles: computed(() => auth.roles),
+    branchScope,
     hasPermission,
     hasAnyPermission,
     canAccessPermission,
+    canAccessBranch,
     isPermissionEnforced,
     ensureInactivePermissions,
     hasRole,

@@ -19,6 +19,7 @@ export const useTaxesStore = defineStore("taxes", () => {
     status: null,
     type: null,
     scope: null,
+    trashed: null,
     per_page: 15,
   });
   const loading = ref(false);
@@ -56,7 +57,8 @@ export const useTaxesStore = defineStore("taxes", () => {
       filters.value.search ||
       filters.value.status ||
       filters.value.type ||
-      filters.value.scope
+      filters.value.scope ||
+      filters.value.trashed
     );
 
     if (!hasFilters && allLoaded.value && !force && loadedTenant.value === tenantId) {
@@ -71,6 +73,7 @@ export const useTaxesStore = defineStore("taxes", () => {
       if (filters.value.status) params.status = filters.value.status;
       if (filters.value.type) params.type = filters.value.type;
       if (filters.value.scope) params.scope = filters.value.scope;
+      if (filters.value.trashed) params.trashed = filters.value.trashed;
 
       const result = await fetchApi("/taxes", { tenant: true, params });
       if (result.error) {
@@ -160,10 +163,82 @@ export const useTaxesStore = defineStore("taxes", () => {
     return { tax, error: result.error };
   }
 
+  async function approve(id) {
+    const result = await fetchApi(`/taxes/${id}/approve`, {
+      tenant: true,
+      method: "PATCH",
+    });
+    const tax = result.error ? null : unwrap(result.data);
+    if (tax) {
+      // Approving may deactivate overlapping active siblings — refresh list.
+      await fetchList(meta.value.current_page || 1, true);
+    }
+    return { tax, error: result.error };
+  }
+
+  async function fetchHistory(id) {
+    const result = await fetchApi(`/taxes/${id}/history`, { tenant: true });
+    if (result.error) {
+      return { items: [], error: result.error };
+    }
+
+    const data = unwrap(result.data) || {};
+    const items = data.items?.data || data.items || [];
+    return { items, error: null };
+  }
+
+  async function createVersion(id, payload) {
+    saving.value = true;
+    try {
+      const result = await fetchApi(`/taxes/${id}/versions`, {
+        tenant: true,
+        method: "POST",
+        body: payload,
+      });
+      const tax = result.error ? null : unwrap(result.data);
+      if (tax) {
+        await fetchList(meta.value.current_page || 1, true);
+      }
+      return { tax, error: result.error };
+    } finally {
+      saving.value = false;
+    }
+  }
+
   async function destroy(id) {
     saving.value = true;
     try {
       const result = await fetchApi(`/taxes/${id}`, {
+        tenant: true,
+        method: "DELETE",
+      });
+      if (!result.error) removeItem(id);
+      return { error: result.error };
+    } finally {
+      saving.value = false;
+    }
+  }
+
+  async function restore(id) {
+    const result = await fetchApi(`/taxes/${id}/restore`, {
+      tenant: true,
+      method: "PATCH",
+    });
+    const tax = result.error ? null : unwrap(result.data);
+    if (tax) {
+      if (filters.value.trashed === "only") {
+        removeItem(id);
+      } else {
+        setItem(tax);
+      }
+    }
+    return { tax, error: result.error };
+  }
+
+  async function forceDestroy(id) {
+    saving.value = true;
+    try {
+      const result = await fetchApi(`/taxes/${id}/force`, {
         tenant: true,
         method: "DELETE",
       });
@@ -191,7 +266,12 @@ export const useTaxesStore = defineStore("taxes", () => {
     update,
     activate,
     deactivate,
+    approve,
+    fetchHistory,
+    createVersion,
     destroy,
+    restore,
+    forceDestroy,
     setFilters,
   };
 });

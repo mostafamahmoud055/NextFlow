@@ -26,7 +26,7 @@ export const useCompaniesStore = defineStore("companies", () => {
 
   const items = ref([]);
   const meta = ref({ current_page: 1, per_page: 15, last_page: 1, total: 0 });
-  const filters = ref({ search: "", status: null, per_page: 15 });
+  const filters = ref({ search: "", status: null, trashed: null, per_page: 15 });
   const loading = ref(false);
   const saving = ref(false);
 
@@ -54,7 +54,7 @@ export const useCompaniesStore = defineStore("companies", () => {
   }
 
   async function fetchList(page = 1, force = false) {
-    const hasFilters = !!(filters.value.search || filters.value.status);
+    const hasFilters = !!(filters.value.search || filters.value.status || filters.value.trashed);
 
     if (!hasFilters && allLoaded.value && !force) {
       items.value = allItems.value;
@@ -66,6 +66,7 @@ export const useCompaniesStore = defineStore("companies", () => {
       const params = { page, per_page: filters.value.per_page };
       if (filters.value.search) params.search = filters.value.search;
       if (filters.value.status) params.status = filters.value.status;
+      if (filters.value.trashed) params.trashed = filters.value.trashed;
 
       const result = await fetchApi("/companies", { params });
       if (result.error) {
@@ -145,6 +146,32 @@ export const useCompaniesStore = defineStore("companies", () => {
     }
   }
 
+  async function restore(uuid) {
+    const result = await fetchApi(`/companies/${uuid}/restore`, { method: "PATCH" });
+    const company = result.error ? null : unwrap(result.data);
+    if (company) {
+      if (filters.value.trashed === "only") {
+        removeItem(uuid);
+      } else {
+        setItem(company);
+      }
+    }
+    return { company, error: result.error };
+  }
+
+  async function forceDestroy(uuid) {
+    saving.value = true;
+    try {
+      const result = await fetchApi(`/companies/${uuid}/force`, {
+        method: "DELETE",
+      });
+      if (!result.error) removeItem(uuid);
+      return { error: result.error };
+    } finally {
+      saving.value = false;
+    }
+  }
+
   function setFilters(next) {
     filters.value = { ...filters.value, ...next };
   }
@@ -164,6 +191,8 @@ export const useCompaniesStore = defineStore("companies", () => {
     activate,
     deactivate,
     destroy,
+    restore,
+    forceDestroy,
     setFilters,
   };
 });

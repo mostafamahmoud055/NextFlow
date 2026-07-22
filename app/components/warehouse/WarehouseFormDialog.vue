@@ -63,12 +63,28 @@
                 item-title="title"
                 item-value="value"
                 :label="t('warehouse.branch')"
+                :loading="branchesLoading"
                 :error-messages="fieldErrors.branch_id"
                 :rules="[requiredRule]"
                 variant="outlined"
                 hide-details="auto"
               />
             </v-col>
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="form.manager_id"
+                :items="managerItems"
+                item-title="title"
+                item-value="value"
+                :label="t('warehouse.manager')"
+                :loading="usersLoading"
+                clearable
+                variant="outlined"
+                :error-messages="fieldErrors.manager_id"
+                hide-details="auto"
+              />
+            </v-col>
+
             <v-col cols="12" sm="6">
               <v-select
                 v-model="form.status"
@@ -120,21 +136,27 @@ import {
   warehouseToForm,
 } from "~/utils/warehouseConstants";
 import { branchDisplayName } from "~/utils/branchConstants";
+import { userDisplayName } from "~/utils/userConstants";
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   warehouse: { type: Object, default: null },
-  branchOptions: { type: Array, default: () => [] },
   saving: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 const { t, locale } = useAppLocale();
+const branchesStore = useBranchesStore();
+const usersStore = useUsersStore();
 
 const formRef = ref(null);
 const form = reactive(emptyWarehouseForm());
 const fieldErrors = reactive({});
+const branches = ref([]);
+const users = ref([]);
+const branchesLoading = ref(false);
+const usersLoading = ref(false);
 
 const isEdit = computed(() => Boolean(props.warehouse?.id));
 
@@ -153,9 +175,16 @@ const typeItems = computed(() =>
 );
 
 const branchItems = computed(() =>
-  props.branchOptions.map((item) => ({
+  branches.value.map((item) => ({
     value: item.id,
     title: branchDisplayName(item, locale.value),
+  })),
+);
+
+const managerItems = computed(() =>
+  users.value.map((user) => ({
+    value: user.id,
+    title: userDisplayName(user, locale.value),
   })),
 );
 
@@ -189,6 +218,26 @@ function hydrate() {
   );
 }
 
+async function loadBranches() {
+  branchesLoading.value = true;
+  try {
+    const { items, error } = await branchesStore.fetchAll();
+    if (!error) branches.value = items;
+  } finally {
+    branchesLoading.value = false;
+  }
+}
+
+async function loadUsers() {
+  usersLoading.value = true;
+  try {
+    const { items, error } = await usersStore.fetchAll();
+    if (!error) users.value = items;
+  } finally {
+    usersLoading.value = false;
+  }
+}
+
 function close() {
   emit("update:modelValue", false);
 }
@@ -220,7 +269,10 @@ async function submit() {
 watch(
   () => props.modelValue,
   (open) => {
-    if (open) hydrate();
+    if (!open) return;
+    hydrate();
+    loadBranches();
+    loadUsers();
   },
 );
 

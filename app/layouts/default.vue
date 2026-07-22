@@ -153,7 +153,7 @@
 import { navigationItems } from "@/config/navigation";
 
 const { t } = useAppLocale()
-const { hasAnyPermission } = usePermissions()
+const { canAccessPermission } = usePermissions()
 const route = useRoute()
 
 const isRail = useState('sidebar-rail', () => true)
@@ -162,7 +162,7 @@ const openedGroups = ref([])
 function canAccess(item) {
   if (!item?.permission) return true
   const keys = Array.isArray(item.permission) ? item.permission : [item.permission]
-  return hasAnyPermission(...keys)
+  return canAccessPermission(...keys)
 }
 
 const visibleNavigationItems = computed(() => {

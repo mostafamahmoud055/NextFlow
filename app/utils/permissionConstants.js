@@ -9,6 +9,8 @@ export const PERMISSION_ACTION_TYPES = [
   { value: "edit", labelKey: "permission.actionEdit" },
   { value: "update", labelKey: "permission.actionUpdate" },
   { value: "delete", labelKey: "permission.actionDelete" },
+  { value: "restore", labelKey: "permission.actionRestore" },
+  { value: "force_delete", labelKey: "permission.actionForceDelete" },
   { value: "manage", labelKey: "permission.actionManage" },
   { value: "activate", labelKey: "permission.actionActivate" },
   { value: "deactivate", labelKey: "permission.actionDeactivate" },
@@ -17,6 +19,13 @@ export const PERMISSION_ACTION_TYPES = [
   { value: "cancel", labelKey: "permission.actionCancel" },
   { value: "attach", labelKey: "permission.actionAttach" },
   { value: "detach", labelKey: "permission.actionDetach" },
+  { value: "generate", labelKey: "permission.actionGenerate" },
+  { value: "open", labelKey: "permission.actionOpen" },
+  { value: "close", labelKey: "permission.actionClose" },
+  { value: "reopen", labelKey: "permission.actionReopen" },
+  { value: "archive", labelKey: "permission.actionArchive" },
+  { value: "export", labelKey: "permission.actionExport" },
+  { value: "view_history", labelKey: "permission.actionViewHistory" },
 ];
 
 export const PERMISSION_MODULES = [
@@ -26,10 +35,14 @@ export const PERMISSION_MODULES = [
   "tenants",
   "branches",
   "fiscal_years",
+  "accounting_periods",
   "currencies",
+  "exchange_rates",
   "taxes",
   "departments",
   "warehouses",
+  "cost_centers",
+  "profit_centers",
   "audit_logs",
   "users",
 ];
